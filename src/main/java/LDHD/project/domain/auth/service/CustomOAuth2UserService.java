@@ -1,4 +1,4 @@
-package LDHD.project.domain.user.service;
+package LDHD.project.domain.auth.service;
 
 import LDHD.project.common.security.oauth.OAuthAttributes;
 import LDHD.project.domain.user.User;

@@ -5,13 +5,11 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Table(name = "users")
 @Entity
 @NoArgsConstructor
 @Getter
-@Setter
 public class User extends BaseEntity {
 
     @Id
@@ -37,10 +35,10 @@ public class User extends BaseEntity {
     private Role role;
 
     // provider & providerId : 현재는 필요 x, 나중에 카카오나 네이버 로그인까지 확장 시 사용자 식별에 사용
-    @Column
+    @Column(nullable = false)
     private String provider;
 
-    @Column
+    @Column(nullable = false)
     private String providerId;
 
     @Builder

@@ -2,65 +2,54 @@ package LDHD.project.common.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends GenericFilterBean {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws IOException, ServletException {
 
-        // Request 헤더 부에서 JWT token 추출
-        String token = resolveToken((HttpServletRequest) request);
+        // 필터 들어가기 전 이전 인증 정보 초기화
+        SecurityContextHolder.clearContext();
 
-        // validateToken으로 토큰 유효성 검사
-        if(token != null && jwtTokenProvider.validateToken(token)) {
-            // 토큰이 유효하다면 정보(이메일) 받아옴
-            String email = jwtTokenProvider.getUserEmail(token);
+        try {
+            // Request 헤더 부에서 JWT token 추출
+            String token = jwtTokenProvider.resolveToken(request);
+            // validateToken으로 토큰 유효성 검사
+            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
 
-            // 인증 객체 생성 -> DB 조회 거치지 않고 토큰의 정보만으로 유저 객체 만듦.
-            UserDetails principal = User.builder()
-                    .username(email)
-                    .password("")
-                    .authorities("ROLE_USER")
-                    .build();
+                // ACCESS 토큰인지 검증(Provider 클래스의 validateTokenType 사용) =>예외 발생시 catch 블럭으로 이동
+                jwtTokenProvider.validateTokenType(token, "ACCESS");
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token, principal.getAuthorities());
+                // 토큰이 유효하다면 인증 객체(Authentication)를 받아옴
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-            // SecurityContext에 Authentication 객체 저장 => 이 로직 이후로 인증된 사용자로 간주
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // SecurityContext에 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                log.debug("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}",
+                        authentication.getName(), request.getRequestURI());
+            }
+
+        } catch (Exception e){
+            SecurityContextHolder.clearContext();
+            log.warn("JWT 인증 처리 중 오류 발생: {}", e.getMessage());
         }
-        // 다음 필터로 요청 넘김
-        chain.doFilter(request, response);
 
-    }
-
-    // Request 헤더에서 토큰 정보 추출
-    private String resolveToken(HttpServletRequest request) {
-
-        // "Authorization: Bearer abcd.efgh.ijkl" 형태에서 "Bearer(권한을 달라는 방식)"를 떼어내는 작업
-        // => 불필요한 Bearer 제거, 순수 토큰인 abcd.efgh.ijkl 값만 추출하도록
-        String bearerToken = request.getHeader("Authorization");
-
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-
-            // 공백포함 7글자(Bearer) 제거
-            return bearerToken.substring(7);
-        }
-        return null;
+        filterChain.doFilter(request, response);
     }
 }
