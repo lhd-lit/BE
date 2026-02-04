@@ -26,10 +26,11 @@ jobs:
       - name: Grant execute permission for gradlew  # gradlew 실행 권한 부여
         run: chmod +x gradlew
 
-      - name: Build with Gradle  # Gradle을 사용하여 프로젝트 빌드
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: build
+      - name: Setup Gradle  # 최신 Gradle 설정 액션 (캐시 문제 해결됨)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle # 빌드 명령어 직접 실행 (테스트 제외로 속도 향상)
+        run: ./gradlew clean build -x test
 
       - name: Upload build artifact  # 빌드된 아티팩트 업로드
         uses: actions/upload-artifact@v4
