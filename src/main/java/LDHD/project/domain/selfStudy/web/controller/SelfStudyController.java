@@ -78,7 +78,7 @@ public class SelfStudyController {
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
     // AWS EC2 서버 연동 확인용 test API
-    @GetMapping("/api/selfStudy/health")
+    @GetMapping("/health")
     public String healthCheck() {
         return "I am Healthy! (버전 1)";
     }
