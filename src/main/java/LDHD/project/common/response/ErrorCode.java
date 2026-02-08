@@ -36,8 +36,15 @@ public enum ErrorCode {
     //AUTH(권한 없음)
     UNAUTHORIZED(HttpStatus.FORBIDDEN, "AUTH400", "접근 권한이 없습니다."),
     INVALID_TOKEN(HttpStatus.FORBIDDEN, "AUTH401", "유효하지 않은 토큰입니다."),
-    INVALID_PASSWORD(HttpStatus.FORBIDDEN, "AUTH402", "유효하지 않은 비밀번호입니다.");
+    INVALID_PASSWORD(HttpStatus.FORBIDDEN, "AUTH402", "유효하지 않은 비밀번호입니다."),
 
+    //GROUP
+    GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "GROUP400", "해당 스터디 그룹을 찾을 수 없습니다."),
+    NOT_GROUP_MEMBER(HttpStatus.FORBIDDEN, "GROUP401", "해당 그룹의 멤버가 아닙니다."),
+    DUPLICATE_GROUP_DOCUMENT(HttpStatus.CONFLICT, "GROUP402", "이미 그룹에 등록된 문서입니다."),
+
+    //SELFSTUDY
+    SELF_STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY400", "해당 학습 자료를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

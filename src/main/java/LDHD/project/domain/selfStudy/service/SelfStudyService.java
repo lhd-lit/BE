@@ -49,7 +49,7 @@ public class SelfStudyService {
         String extractedText = fileTextParser.extractText(file);
 
         SelfStudy selfStudy = SelfStudy.builder()
-                .user(user)
+                .uploader(user)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .fileUrl(fileUrl)
@@ -75,7 +75,7 @@ public class SelfStudyService {
                 .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
 
         // 2. 권한 확인 (UNAUTHORIZED - 작성자와 요청자가 다를 경우)
-        if (!selfStudy.getUser().getId().equals(currentUserId)) {
+        if (!selfStudy.getUploader().getId().equals(currentUserId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
         // 3. S3 저장소에 있는 파일 삭제
@@ -96,7 +96,7 @@ public class SelfStudyService {
                 .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
 
         // 2. 권한 확인 (UNAUTHORIZED - 작성자와 요청자가 다를 경우)
-        if (!selfStudy.getUser().getId().equals(currentUserId)) {
+        if (!selfStudy.getUploader().getId().equals(currentUserId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 

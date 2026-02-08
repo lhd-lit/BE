@@ -25,7 +25,7 @@ public class GetSelfStudyListResponse {
                 .description(selfStudy.getDescription())
                 .fileUrl(selfStudy.getFileUrl())
                 .original_file_name(selfStudy.getOriginalFileName())
-                .writerName(selfStudy.getUser().getName())
+                .writerName(selfStudy.getUploader().getName())
                 .build();
     }
 }
