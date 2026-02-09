@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GroupDocumentRepository extends JpaRepository<GroupDocument, Long> {
 
-    boolean existsByStudyGroupIdAndSelfStudyId(Long studyGroupId, Long selfStudyId);
+    boolean existsByStudyGroup_IdAndSelfStudy_Id(Long studyGroupId, Long selfStudyId);
 }

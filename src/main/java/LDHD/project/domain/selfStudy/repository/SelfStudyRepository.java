@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface SelfStudyRepository extends JpaRepository<SelfStudy,Long> {
-    Optional<SelfStudy>findByIdAndUser_Id(Long selfStudyId, Long userId);
-    boolean existsByUser_Id(Long userId);
-    Page<SelfStudy> findAllByUser_Id(Long userId, Pageable pageable);
+    Optional<SelfStudy>findByIdAndUploader_Id(Long selfStudyId, Long userId);
+    boolean existsByUploader_Id(Long userId);
+    Page<SelfStudy> findAllByUploader_Id(Long userId, Pageable pageable);
 }
