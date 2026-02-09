@@ -124,7 +124,7 @@ public class SelfStudyService {
         // 페이지는 0부터 시작, 작성 시간 기준으로 내림차순 정리
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<SelfStudy> selfStudies = selfStudyRepository.findAllByUserId(userId, pageable);
+        Page<SelfStudy> selfStudies = selfStudyRepository.findAllByUser_Id(userId, pageable);
 
         return selfStudies.map(GetSelfStudyListResponse::from);
     }
