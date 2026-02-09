@@ -19,30 +19,30 @@ public class SelfStudy extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    User user;
+    private User uploader;
 
     @Column
-    String title;
+    private String title;
 
     @Column
-    String description;
+    private String description;
 
     //S3 파일 URL
     @Column(name = "file_Url", nullable = false)
-    String fileUrl;
+    private String fileUrl;
 
     //원본 파일명(UI 표시 및 다운로드용)
     @Column(name = "original_file_name", nullable = false)
-    String originalFileName;
+    private String originalFileName;
 
     //문서에서 추출된 전체 텍스트(AI용)
     @Lob // DB에 긴 글 저장 가능하도록
     @Column(name = "extracted_text", columnDefinition = "TEXT")
-    String extractedText;
+    private String extractedText;
 
     @Builder
-    public SelfStudy(User user, String title, String description, String fileUrl, String originalFileName ,String extractedText) {
-        this.user = user;
+    public SelfStudy(User uploader, String title, String description, String fileUrl, String originalFileName ,String extractedText) {
+        this.uploader = uploader;
         this.title = title;
         this.description = description;
         this.fileUrl = fileUrl;
