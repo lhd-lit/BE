@@ -37,5 +37,7 @@ out/
 .vscode/
 
 ### 비밀번호 파일 ###
-application.yaml
 application.yml
+application.yaml
+application-dev.yml
+application-local.yml
