@@ -1,0 +1,69 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  application:
+    name: Project
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: dlrygud1371!
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    format_sql: true
+    use_sql_comments: true
+    open-in-view: false
+    properties:
+      hibernate: # dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  cloud:
+    aws:
+      s3:
+        bucket: "ldhd-self-study-1"  # AWS 콘솔에서 만든 버킷 이름
+      credentials:
+        access-key: AKIASG6B26P3X2WVGOFG     # IAM 사용자 액세스 키
+        secret-key:   g4dqRYaiWNKXDX1i7vr+kf2X2pRmM5rfWNz9bgu1    # IAM 사용자 시크릿 키
+      region:
+        static: ap-northeast-2      # 서울 리전 (필수)
+        auto: false
+      stack:
+        auto: false                 # CloudFormation 비활성화 (부팅 속도 향상)
+
+    # 대용량 파일 업로드 설정 (전공책 PDF 등 고려 50MB)
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  app:
+    cookie:
+      secure: false # 로컬: false, 배포시 true로 변경 필요
+
+  security:
+    oauth2:
+      frontend-url: "http://localhost:5173/login-success"
+      client:
+        registration:
+          google:
+            client-id: 29526782273-eh4m4201trf9bc28qcivpq2ptpe9gcak.apps.googleusercontent.com
+            client-secret: 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
+            redirect-uri: http://13.125.189.72.nip.io:8080/login/oauth2/code/google #EC2 퍼블릭 Ip.nip.io : 구글 클라우드의 도메인 주소 요청
+            authorization-grant-type: authorization_code
+            scope:
+              - profile
+              - email
+jwt:
+  secret: BackendDoesntSuitMe1818GoogleNaverKaKaoLDHDLesGo
+  access-token-expiration-millis: 1800000    # 30분 (30 * 60 * 1000)
+  refresh-token-expiration-millis: 1209600000 # 14일 (14 * 24 * 60 * 60 * 1000)

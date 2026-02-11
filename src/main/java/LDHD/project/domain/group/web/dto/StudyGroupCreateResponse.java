@@ -15,7 +15,7 @@ public class StudyGroupCreateResponse {
 
     public static StudyGroupCreateResponse from(StudyGroup group) {
         return StudyGroupCreateResponse.builder()
-                .id(group.getStudyGroupId())
+                .id(group.getId())
                 .name(group.getName())
                 .description(group.getDescription())
                 .ownerName(group.getOwner().getName())
