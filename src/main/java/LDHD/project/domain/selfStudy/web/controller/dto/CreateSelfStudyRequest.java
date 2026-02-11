@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateSelfStudyRequest {
 
-    Long userId;
-
     String title;
     String description;
 }

@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -15,13 +14,14 @@ public class SelfStudy extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "self_study_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User uploader;
 
-    @Column
+    @Column(nullable = false)
     private String title;
 
     @Column
@@ -48,6 +48,17 @@ public class SelfStudy extends BaseEntity {
         this.fileUrl = fileUrl;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
+    }
+
+    public static SelfStudy create(User uploader, String title, String description, String fileUrl, String originalFileName, String extractedText) {
+        return SelfStudy.builder()
+                .uploader(uploader)
+                .title(title)
+                .description(description)
+                .fileUrl(fileUrl)
+                .originalFileName(originalFileName)
+                .extractedText(extractedText)
+                .build();
     }
 
     // Self-Study 제목, 설명만 변경 가능

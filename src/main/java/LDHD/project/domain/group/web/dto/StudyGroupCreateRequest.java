@@ -16,6 +16,6 @@ public class StudyGroupCreateRequest {
     @Size(min = 2, max = 50, message = "이름은 2자 이상 50자 이하로 입력해주세요.")
     private String name;
 
-    @Size(min = 2, max = 50, message = "설명은 50자를 초과할 수 없습니다.")
+    @Size(min = 2, max = 100, message = "설명은 100자를 초과할 수 없습니다.")
     private String description;
 }

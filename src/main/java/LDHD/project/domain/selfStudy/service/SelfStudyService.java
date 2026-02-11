@@ -4,6 +4,7 @@ import LDHD.project.common.aws.S3FileUploader;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.utils.FileTextParser;
+import LDHD.project.domain.group.repository.GroupDocumentRepository;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.selfStudy.web.controller.dto.*;
@@ -27,35 +28,30 @@ public class SelfStudyService {
     private final UserRepository userRepository;
     private final S3FileUploader s3FileUploader;
     private final FileTextParser fileTextParser;
+    private final GroupDocumentRepository groupDocumentRepository;
     // self-study 생성 로직
     @Transactional
     public CreateSelfStudyResponse createSelfStudy( Long currentUserId, CreateSelfStudyRequest request, MultipartFile file) {
 
         //1. 사용자 존재 확인
-        User user = userRepository.findById(request.getUserId()).orElseThrow(
+        User user = userRepository.findById(currentUserId).orElseThrow(
                 ()-> new GeneralException(ErrorCode.USER_NOT_FOUND));
-        //2. 사용자 검사( 현재 로그인 사용자와 ID대조)
-        if (!currentUserId.equals(request.getUserId())) {
-            throw new GeneralException(ErrorCode.UNAUTHORIZED);
-        }
 
-        //3. 파일 유효성 검사
+        //2. 파일 유효성 검사
         if(file.isEmpty()){throw new GeneralException(ErrorCode.VALIDATION_FAILED);}
 
-        //4. S3 파일 업로드 URL
+        //3. S3 파일 업로드 URL
         String fileUrl = s3FileUploader.upload(file);
 
-        //5. 파일 텍스트 추출(AI 학습용)
+        //4. 파일 텍스트 추출(AI 학습용)
         String extractedText = fileTextParser.extractText(file);
 
-        SelfStudy selfStudy = SelfStudy.builder()
-                .uploader(user)
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .fileUrl(fileUrl)
-                .originalFileName(file.getOriginalFilename())
-                .extractedText(extractedText)
-                .build();
+        SelfStudy selfStudy = SelfStudy.create(
+                user, request.getTitle(),
+                request.getDescription(),
+                fileUrl, file.getOriginalFilename(),
+                extractedText
+        );
 
         selfStudyRepository.save(selfStudy);
 
@@ -78,12 +74,14 @@ public class SelfStudyService {
         if (!selfStudy.getUploader().getId().equals(currentUserId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
+        groupDocumentRepository.deleteBySelfStudy(selfStudy);
+
         // 3. S3 저장소에 있는 파일 삭제
         if (selfStudy.getFileUrl() != null && !selfStudy.getFileUrl().isEmpty()) {
             s3FileUploader.deleteFile(selfStudy.getFileUrl());
         }
         // PostgresSql DB에서 삭제
-        selfStudyRepository.deleteById(selfStudyId);
+        selfStudyRepository.delete(selfStudy);
 
     }
 

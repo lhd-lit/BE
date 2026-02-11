@@ -17,9 +17,12 @@ public class GroupDocumentAddResponse {
     private GroupDocumentAddResponse(GroupDocument document) {
 
         this.groupDocumentId = document.getId();
+
         SelfStudy selfStudy = document.getSelfStudy();
         this.selfStudyId = selfStudy.getId();
+
         this.title = selfStudy.getTitle();
+        // SelfStudy -> User(Uploader) -> Name
         this.uploaderName = selfStudy.getUploader().getName();
     }
 
