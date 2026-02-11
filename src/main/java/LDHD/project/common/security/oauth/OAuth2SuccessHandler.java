@@ -36,6 +36,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${jwt.refresh-token-expiration-millis}")
     private long refreshTokenExpirationMillis;
 
+    @Value("${spring.security.oauth2.frontend-url}")
+    private String frontendUrl;
+
     @Override
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -65,7 +68,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 리다이렉트 URI 설정 (로그인 성공 시 토큰을 쿼리 파라미터에 담아 전달)
         //"/login-success" 또는 메인 페이지로 설정해야함! 현재 test 시 화면 이동이 되지 않지만 DB에는 저장됨
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173" + "/login-success")
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl )
                 .queryParam("accessToken", accessToken)
                 .build()
                 .toUriString();
