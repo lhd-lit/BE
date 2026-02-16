@@ -117,7 +117,10 @@
             <p style="margin-top: 8px;">LIT 앱을 열고 있습니다...</p>
             <div class="loading"></div>
         </div>
-        <p class="footer-text">이 창은 자동으로 닫힙니다.</p>
+        <button onclick="openApp()" style="margin-top: 24px; background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; font-family: 'Inter', sans-serif;">
+            LIT 앱 열기
+        </button>
+        <p class="footer-text">위 버튼을 클릭하거나 잠시 후 자동으로 열립니다.</p>
     </div>
 
     <script th:inline="javascript">
@@ -135,40 +138,76 @@
             const protocolUrl = 'lit://login-success?accessToken=' + encodeURIComponent(accessToken);
             console.log('[OAuth] Protocol URL:', protocolUrl);
 
+            let protocolCalled = false;
+            
             function openApp() {
-                // 방법 1: window.location.href 직접 시도
+                if (protocolCalled) {
+                    console.log('[OAuth] Protocol already called, skipping');
+                    return;
+                }
+                
+                console.log('[OAuth] Attempting to call protocol:', protocolUrl);
+                
+                // 방법 1: a 태그 클릭 시뮬레이션 (가장 안정적)
                 try {
-                    console.log('[OAuth] Attempting method 1: window.location.href');
-                    window.location.href = protocolUrl;
+                    console.log('[OAuth] Attempting method 1: anchor tag click');
+                    var a = document.createElement('a');
+                    a.href = protocolUrl;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    protocolCalled = true;
+                    console.log('[OAuth] Method 1 completed');
                 } catch (e) {
                     console.error('[OAuth] Method 1 failed:', e);
                 }
 
-                // 방법 2: setTimeout으로 재시도
+                // 방법 2: window.location.href 직접 시도
                 setTimeout(function() {
-                    try {
-                        console.log('[OAuth] Attempting method 2: window.location');
-                        window.location = protocolUrl;
-                    } catch (e) {
-                        console.error('[OAuth] Method 2 failed:', e);
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 2: window.location.href');
+                            window.location.href = protocolUrl;
+                            protocolCalled = true;
+                        } catch (e) {
+                            console.error('[OAuth] Method 2 failed:', e);
+                        }
                     }
                 }, 100);
 
-                // 방법 3: a 태그 클릭 시뮬레이션
+                // 방법 3: window.location 직접 할당
                 setTimeout(function() {
-                    try {
-                        console.log('[OAuth] Attempting method 3: anchor tag click');
-                        var a = document.createElement('a');
-                        a.href = protocolUrl;
-                        a.style.display = 'none';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        console.log('[OAuth] Method 3 completed');
-                    } catch (e) {
-                        console.error('[OAuth] Method 3 failed:', e);
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 3: window.location');
+                            window.location = protocolUrl;
+                            protocolCalled = true;
+                        } catch (e) {
+                            console.error('[OAuth] Method 3 failed:', e);
+                        }
                     }
                 }, 200);
+
+                // 방법 4: iframe을 통한 시도
+                setTimeout(function() {
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 4: iframe');
+                            var iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = protocolUrl;
+                            document.body.appendChild(iframe);
+                            setTimeout(function() {
+                                document.body.removeChild(iframe);
+                            }, 1000);
+                            protocolCalled = true;
+                            console.log('[OAuth] Method 4 completed');
+                        } catch (e) {
+                            console.error('[OAuth] Method 4 failed:', e);
+                        }
+                    }
+                }, 300);
 
                 // 프로토콜 호출 후 브라우저 닫기 시도
                 setTimeout(function() {
@@ -178,12 +217,32 @@
                     } catch (e) {
                         console.log('[OAuth] Browser auto-close failed (normal):', e);
                     }
-                }, 500);
+                }, 1000);
             }
 
-            console.log('[OAuth] Page loaded, starting protocol call');
+            console.log('[OAuth] Page loaded, accessToken:', accessToken ? 'present' : 'missing');
+            console.log('[OAuth] Protocol URL:', protocolUrl);
+            
             // 페이지 로드 시 자동으로 시도
             setTimeout(openApp, 100);
+            
+            // 사용자가 버튼을 클릭하지 않아도 자동으로 재시도
+            let attempts = 0;
+            const maxAttempts = 3;
+            const autoRetry = setInterval(() => {
+                attempts++;
+                if (attempts < maxAttempts && !protocolCalled) {
+                    console.log(`[OAuth] Auto-retry attempt ${attempts}/${maxAttempts}`);
+                    openApp();
+                } else {
+                    clearInterval(autoRetry);
+                    if (protocolCalled) {
+                        console.log(`[OAuth] Protocol called successfully`);
+                    } else {
+                        console.log(`[OAuth] Auto-retry stopped after ${maxAttempts} attempts. Please click the button.`);
+                    }
+                }
+            }, 2000);
         })();
     </script>
 </body>
