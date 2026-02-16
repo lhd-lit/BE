@@ -43,6 +43,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException{
+        log.info("OAuth2SuccessHandler 호출됨 - Request URI: {}, Method: {}, Query String: {}", 
+                request.getRequestURI(), request.getMethod(), request.getQueryString());
+        log.info("OAuth2SuccessHandler 호출됨 - 이 메시지가 보이면 이미 인증된 상태입니다!");
+        
         // 구글 로그인 성공 후 사용자 정보(principal) 가져오기
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email"); // 구글이 넘겨준 이메일
@@ -67,13 +71,35 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookieUtil.addCookie(response, refreshToken, cookieMaxAge);
 
         // 리다이렉트 URI 설정 (로그인 성공 시 토큰을 쿼리 파라미터에 담아 전달)
-        //"/login-success" 또는 메인 페이지로 설정해야함! 현재 test 시 화면 이동이 되지 않지만 DB에는 저장됨
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl )
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                 .queryParam("accessToken", accessToken)
                 .build()
                 .toUriString();
 
-        // 리다이렉트 수행
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        log.info("리다이렉트 URL: {}", targetUrl);
+        log.info("커스텀 프로토콜 사용 여부: {}", targetUrl.startsWith("lit://"));
+        
+        // 커스텀 프로토콜(lit://) 사용 시 302 리다이렉트로 직접 전달
+        // 브라우저가 커스텀 프로토콜을 처리할 수 있도록 Location 헤더에 직접 설정
+        if (targetUrl.startsWith("lit://")) {
+            // 302 리다이렉트 (브라우저가 커스텀 프로토콜을 처리)
+            response.setStatus(HttpServletResponse.SC_FOUND);
+            response.setHeader("Location", targetUrl);
+            
+            // 캐시 방지 (일부 환경에서 redirect 페이지 캐시로 꼬이는 경우 예방)
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            response.setHeader("Pragma", "no-cache");
+            response.setHeader("Expires", "0");
+            
+            // 혹시 모를 CSP/프레임 문제 방지
+            response.setHeader("X-Content-Type-Options", "nosniff");
+            
+            // 바디는 비워도 됨 (브라우저가 Location 따라감)
+            response.getWriter().flush();
+            
+        } else {
+            // 일반 HTTP URL인 경우 기존 방식 사용
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        }
     }
 }

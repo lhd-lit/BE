@@ -4,7 +4,6 @@ import LDHD.project.common.entity.BaseEntity;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,8 +26,8 @@ public class GroupDocument extends BaseEntity {
     @JoinColumn(name = "self_study_id", nullable = false)
     private SelfStudy selfStudy; // 실제 문서 정보
 
-    @Builder
-    public GroupDocument(StudyGroup studyGroup, SelfStudy selfStudy) {
+
+    private GroupDocument(StudyGroup studyGroup, SelfStudy selfStudy) {
         this.studyGroup = studyGroup;
         this.selfStudy = selfStudy;
     }

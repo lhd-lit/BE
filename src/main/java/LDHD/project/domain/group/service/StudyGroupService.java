@@ -7,15 +7,14 @@ import LDHD.project.domain.group.entity.StudyGroup;
 import LDHD.project.domain.group.repository.GroupDocumentRepository;
 import LDHD.project.domain.group.repository.GroupMemberRepository;
 import LDHD.project.domain.group.repository.StudyGroupRepository;
-import LDHD.project.domain.group.web.dto.GroupDocumentAddRequest;
-import LDHD.project.domain.group.web.dto.GroupDocumentAddResponse;
-import LDHD.project.domain.group.web.dto.StudyGroupCreateRequest;
-import LDHD.project.domain.group.web.dto.StudyGroupCreateResponse;
+import LDHD.project.domain.group.web.dto.*;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,4 +76,22 @@ public class StudyGroupService {
 
         return GroupDocumentAddResponse.from(groupDocument);
     }
+
+    // 그룹 문서 조회
+    public Page<GroupDocumentListResponse> getGroupDocuments(Long userId, Long groupId, Pageable pageable){
+
+        // 그룹 존재 여부 검증
+        if(!studyGroupRepository.existsById(groupId)){
+            throw new GeneralException(ErrorCode.GROUP_NOT_FOUND);
+        }
+        // 멤버 권한 검증
+        if(!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+        // 문서 조회
+        Page<GroupDocument> documents = groupDocumentRepository.findAllByStudyGroupId(groupId, pageable);
+
+        return documents.map(GroupDocumentListResponse::from);
+    }
+
 }

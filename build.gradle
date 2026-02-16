@@ -65,6 +65,9 @@ dependencies {
 
     // WebSocket 의존성
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // Thymeleaf 템플릿 엔진
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }
 
 tasks.named('test') {

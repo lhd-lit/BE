@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 성공 - LIT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #F5F1E8 0%, #FAF8F3 50%, #F0EBE0 100%);
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 448px;
+            min-height: 455px;
+            border-radius: 1rem;
+            border: 1px solid rgba(90, 74, 58, 0.15);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 24px;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 48px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+        }
+
+        .title {
+            margin-top: 32px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .subtitle {
+            margin-top: 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            line-height: 26px;
+            color: #666;
+            text-align: center;
+        }
+
+        .message {
+            margin-top: 48px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            line-height: 1.5rem;
+            color: #333;
+            text-align: center;
+        }
+
+        .loading {
+            margin-top: 24px;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #5A4A3A;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer-text {
+            margin-top: 24px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: #999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="/appLogo.png" alt="LIT Logo" class="logo" onerror="this.style.display='none'">
+            <h1 class="title">Literature In Together</h1>
+            <p class="subtitle">AI assistant for understanding English Literature</p>
+        </div>
+        <div class="message">
+            <p>로그인 성공!</p>
+            <p style="margin-top: 8px;">LIT 앱을 열고 있습니다...</p>
+            <div class="loading"></div>
+        </div>
+        <button onclick="openApp()" style="margin-top: 24px; background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; font-family: 'Inter', sans-serif;">
+            LIT 앱 열기
+        </button>
+        <p class="footer-text">위 버튼을 클릭하거나 잠시 후 자동으로 열립니다.</p>
+    </div>
+
+    <script th:inline="javascript">
+        (function() {
+            // Thymeleaf에서 주입된 accessToken 사용
+            const accessToken = /*[[${accessToken}]]*/ '';
+            
+            if (!accessToken) {
+                console.error('[OAuth] Access token is missing.');
+                document.querySelector('.message').innerHTML = '<p style="color: #dc2626;">로그인 토큰을 받을 수 없습니다.</p>';
+                return;
+            }
+
+            // 커스텀 프로토콜 URL 생성
+            const protocolUrl = 'lit://login-success?accessToken=' + encodeURIComponent(accessToken);
+            console.log('[OAuth] Protocol URL:', protocolUrl);
+
+            let protocolCalled = false;
+            
+            function openApp() {
+                if (protocolCalled) {
+                    console.log('[OAuth] Protocol already called, skipping');
+                    return;
+                }
+                
+                console.log('[OAuth] Attempting to call protocol:', protocolUrl);
+                
+                // 방법 1: a 태그 클릭 시뮬레이션 (가장 안정적)
+                try {
+                    console.log('[OAuth] Attempting method 1: anchor tag click');
+                    var a = document.createElement('a');
+                    a.href = protocolUrl;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    protocolCalled = true;
+                    console.log('[OAuth] Method 1 completed');
+                } catch (e) {
+                    console.error('[OAuth] Method 1 failed:', e);
+                }
+
+                // 방법 2: window.location.href 직접 시도
+                setTimeout(function() {
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 2: window.location.href');
+                            window.location.href = protocolUrl;
+                            protocolCalled = true;
+                        } catch (e) {
+                            console.error('[OAuth] Method 2 failed:', e);
+                        }
+                    }
+                }, 100);
+
+                // 방법 3: window.location 직접 할당
+                setTimeout(function() {
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 3: window.location');
+                            window.location = protocolUrl;
+                            protocolCalled = true;
+                        } catch (e) {
+                            console.error('[OAuth] Method 3 failed:', e);
+                        }
+                    }
+                }, 200);
+
+                // 방법 4: iframe을 통한 시도
+                setTimeout(function() {
+                    if (!protocolCalled) {
+                        try {
+                            console.log('[OAuth] Attempting method 4: iframe');
+                            var iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = protocolUrl;
+                            document.body.appendChild(iframe);
+                            setTimeout(function() {
+                                document.body.removeChild(iframe);
+                            }, 1000);
+                            protocolCalled = true;
+                            console.log('[OAuth] Method 4 completed');
+                        } catch (e) {
+                            console.error('[OAuth] Method 4 failed:', e);
+                        }
+                    }
+                }, 300);
+
+                // 프로토콜 호출 후 브라우저 닫기 시도
+                setTimeout(function() {
+                    try {
+                        console.log('[OAuth] Attempting to close browser');
+                        window.close();
+                    } catch (e) {
+                        console.log('[OAuth] Browser auto-close failed (normal):', e);
+                    }
+                }, 1000);
+            }
+
+            console.log('[OAuth] Page loaded, accessToken:', accessToken ? 'present' : 'missing');
+            console.log('[OAuth] Protocol URL:', protocolUrl);
+            
+            // 페이지 로드 시 자동으로 시도
+            setTimeout(openApp, 100);
+            
+            // 사용자가 버튼을 클릭하지 않아도 자동으로 재시도
+            let attempts = 0;
+            const maxAttempts = 3;
+            const autoRetry = setInterval(() => {
+                attempts++;
+                if (attempts < maxAttempts && !protocolCalled) {
+                    console.log(`[OAuth] Auto-retry attempt ${attempts}/${maxAttempts}`);
+                    openApp();
+                } else {
+                    clearInterval(autoRetry);
+                    if (protocolCalled) {
+                        console.log(`[OAuth] Protocol called successfully`);
+                    } else {
+                        console.log(`[OAuth] Auto-retry stopped after ${maxAttempts} attempts. Please click the button.`);
+                    }
+                }
+            }, 2000);
+        })();
+    </script>
+</body>
+</html>
+
