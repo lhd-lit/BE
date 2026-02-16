@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final UserRepository userRepository;
     private final RefreshTokenRepository  refreshTokenRepository;
     private final CookieUtil cookieUtil;
+    private final TemplateEngine templateEngine;
 
     @Value("${jwt.refresh-token-expiration-millis}")
     private long refreshTokenExpirationMillis;
@@ -79,13 +84,26 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         log.info("리다이렉트 URL: {}", targetUrl);
         log.info("커스텀 프로토콜 사용 여부: {}", targetUrl.startsWith("lit://"));
         
-        // 커스텀 프로토콜(lit://)인 경우 로그만 출력
+        // 커스텀 프로토콜(lit://) 사용 시 Thymeleaf 템플릿으로 HTML 페이지 반환
+        // HTTP 리다이렉트는 커스텀 프로토콜을 직접 처리할 수 없으므로 HTML 페이지 필요
         if (targetUrl.startsWith("lit://")) {
-            log.info("커스텀 프로토콜 리다이렉트: {}", targetUrl);
-            // HTML 페이지는 사용하지 않음
+            response.setContentType("text/html;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            
+            // Thymeleaf 컨텍스트 생성 및 변수 주입
+            Context context = new Context();
+            context.setVariable("accessToken", accessToken);
+            
+            // RequestContextHolder 설정 (Thymeleaf가 request, response 접근 가능하도록)
+            RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, response));
+            
+            // Thymeleaf 템플릿 렌더링
+            String html = templateEngine.process("oauth-success", context);
+            
+            response.getWriter().write(html);
+            response.getWriter().flush();
+            
         } else {
-            // 일반 HTTP URL인 경우 기존 방식 사용
-            log.info("일반 HTTP URL 리다이렉트: {}", targetUrl);
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         }
     }
