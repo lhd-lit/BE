@@ -43,6 +43,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException{
+        log.info("OAuth2SuccessHandler 호출됨 - Request URI: {}, Method: {}, Query String: {}", 
+                request.getRequestURI(), request.getMethod(), request.getQueryString());
+        log.info("OAuth2SuccessHandler 호출됨 - 이 메시지가 보이면 이미 인증된 상태입니다!");
+        
         // 구글 로그인 성공 후 사용자 정보(principal) 가져오기
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email"); // 구글이 넘겨준 이메일
@@ -67,13 +71,22 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookieUtil.addCookie(response, refreshToken, cookieMaxAge);
 
         // 리다이렉트 URI 설정 (로그인 성공 시 토큰을 쿼리 파라미터에 담아 전달)
-        //"/login-success" 또는 메인 페이지로 설정해야함! 현재 test 시 화면 이동이 되지 않지만 DB에는 저장됨
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl )
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                 .queryParam("accessToken", accessToken)
                 .build()
                 .toUriString();
 
-        // 리다이렉트 수행
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        log.info("리다이렉트 URL: {}", targetUrl);
+        log.info("커스텀 프로토콜 사용 여부: {}", targetUrl.startsWith("lit://"));
+        
+        // 커스텀 프로토콜(lit://)인 경우 로그만 출력
+        if (targetUrl.startsWith("lit://")) {
+            log.info("커스텀 프로토콜 리다이렉트: {}", targetUrl);
+            // HTML 페이지는 사용하지 않음
+        } else {
+            // 일반 HTTP URL인 경우 기존 방식 사용
+            log.info("일반 HTTP URL 리다이렉트: {}", targetUrl);
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        }
     }
 }
