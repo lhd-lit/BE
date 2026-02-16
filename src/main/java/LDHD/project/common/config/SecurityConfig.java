@@ -51,7 +51,7 @@ public class SecurityConfig {
                         // 정적 자원(css, js, image), 메인 페이지, 로그인 관련 URL 모두 허용
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**"). permitAll()
                         // feat/create/login 작성 후 swagger 연동 하려고 보니 security 상에서 로그인 화면을 계속 띄워 접근 제한
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**","/swagger-ui.html", "/api/selfStudy/health").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**","/swagger-ui.html").permitAll()
                         // 로그인, 토큰 재발급(인증 없이 접근 허용)
                         .requestMatchers("/login/**","/api/auth/**", "/api/auth/reissue").permitAll()
                         // "/api/**"로 시작하는 요청은 인증된 유저만 접근 가능(USER 권한 필요)
