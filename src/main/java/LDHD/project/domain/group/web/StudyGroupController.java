@@ -1,5 +1,5 @@
 package LDHD.project.domain.group.web;
-
+import LDHD.project.domain.group.web.dto.GroupDocumentListResponse;
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
 import LDHD.project.domain.group.service.StudyGroupService;

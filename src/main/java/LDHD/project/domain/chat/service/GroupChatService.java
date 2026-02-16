@@ -50,7 +50,7 @@ public class GroupChatService {
         // 3. 멤버십 검증
         Long studyGroupId = chatRoom.getStudyGroup().getId();
 
-        if(!memberRepository.existsByStudyGroup_IdAndUser_Id(studyGroupId, userId)){
+        if(!memberRepository.existsByStudyGroupIdAndUserId(studyGroupId, userId)){
             log.warn("Unauthorized chat access - userId: {}, studyGroupId: {} ", userId, studyGroupId);
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }

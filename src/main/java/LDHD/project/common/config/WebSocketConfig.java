@@ -169,7 +169,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             Long studyGroupId = chatRoom.getStudyGroup().getId();
 
             // 4. 멤버십 검증
-            if (!groupMemberRepository.existsByStudyGroup_IdAndUser_Id(studyGroupId, userId)) {
+            if (!groupMemberRepository.existsByStudyGroupIdAndUserId(studyGroupId, userId)) {
                 log.warn("그룹 채팅방 구독 거부 - userId: {}, chatRoomId: {}, studyGroupId: {}",
                         userId, chatRoomId, studyGroupId);
                 throw new AccessDeniedException("이 채팅방에 접근 권한이 없습니다.");
