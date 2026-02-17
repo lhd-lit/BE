@@ -85,7 +85,7 @@ public class StudyGroupService {
             throw new GeneralException(ErrorCode.GROUP_NOT_FOUND);
         }
         // 멤버 권한 검증
-        if(!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
+        if(!groupMemberRepository.existsByStudyGroup_IdAndUser_Id(groupId, userId)) {
             throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
         }
         // 문서 조회
