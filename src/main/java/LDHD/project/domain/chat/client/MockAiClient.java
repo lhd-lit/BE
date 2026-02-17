@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("local")
+//@Profile("local") : local 에서만 작동하므로 서버 환경에서는 AiClient가 스프링에 빈으로 등록이 되지 않는 오류 발생
 public class MockAiClient implements AiClient {
     @Override
     public String generateResponseWithContext(
