@@ -47,7 +47,7 @@ public class GroupChatService {
                 .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
 
         // 권한 체크
-        if (!memberRepository.existsByStudyGroup_IdAndUser_Id(studyGroup.getId(), requesterId)) {
+        if (!memberRepository.existsByStudyGroupIdAndUserId(studyGroup.getId(), requesterId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -82,7 +82,7 @@ public class GroupChatService {
     public void inviteUsers(Long studyGroupId, InviteGroupChatMemberRequest request, Long inviterId) {
 
         // 초대자 권한 검증
-        if (!memberRepository.existsByStudyGroup_IdAndUser_Id(studyGroupId, inviterId)) {
+        if (!memberRepository.existsByStudyGroupIdAndUserId(studyGroupId, inviterId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -268,7 +268,7 @@ public class GroupChatService {
         Long studyGroupId = chatRoom.getStudyGroup().getId();
 
         // 3. 사용자 멤버십 검증
-        if (!memberRepository.existsByStudyGroup_IdAndUser_Id(studyGroupId, userId)) {
+        if (!memberRepository.existsByStudyGroupIdAndUserId(studyGroupId, userId)) {
             log.warn("Unauthorized group chat access - userId: {}, chatRoomId: {}",
                     userId, chatRoomId);
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
