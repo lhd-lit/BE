@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> {
 
-    boolean existsByStudyGroup_IdAndUser_Id(Long studyGroupId, Long userId);
+    boolean existsByStudyGroupIdAndUserId(Long studyGroupId, Long userId);
 
     @Query("SELECT m.studyGroup.id, count(m) " +
             "FROM GroupMember m " +
