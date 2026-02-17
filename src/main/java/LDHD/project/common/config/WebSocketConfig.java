@@ -50,7 +50,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/pub");
 
         // 3. 메시지 받을 때 (Subscribe) 경로: /sub/chat/room/{id}
-        registry.enableSimpleBroker("/sub");
+        registry.enableSimpleBroker("/sub","/queue");
+        // 4. convertAndSendToUser() 동작에 필수
+        registry.setUserDestinationPrefix("/user");
     }
 
     // 인바운드 채널 설정

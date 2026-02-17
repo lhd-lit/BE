@@ -26,13 +26,7 @@ public class GroupChatRoom extends BaseEntity {
 
     @Builder
     private GroupChatRoom(StudyGroup studyGroup){
-        this.studyGroup = studyGroup;
-    }
 
-    // 그룹 채팅방 생성
-    public static GroupChatRoom create(StudyGroup studyGroup){
-        return GroupChatRoom.builder()
-                .studyGroup(studyGroup)
-                .build();
+        this.studyGroup = studyGroup;
     }
 }

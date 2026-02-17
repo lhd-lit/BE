@@ -3,16 +3,16 @@ package LDHD.project.domain.chat.web.dto;
 import LDHD.project.domain.chat.entity.GroupChatMessage;
 import LDHD.project.domain.chat.entity.GroupChatRoom;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
+@Schema(description = "그룹 채팅 메시지 응답 DTO")
 public class GroupMessageResponse {
 
     private Long messageId;
