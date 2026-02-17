@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface SelfStudyRepository extends JpaRepository<SelfStudy,Long> {
     @Query("SELECT s FROM SelfStudy s JOIN FETCH s.uploader WHERE s.uploader.id = :userId")
-    Page<SelfStudy> findAllByUploaderId(@Param("userId") Long userId, Pageable pageable);
+    Page<SelfStudy> findAllByUser_Id(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT s FROM SelfStudy s JOIN FETCH s.uploader")
     Page<SelfStudy> findAll(Pageable pageable);

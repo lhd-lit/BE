@@ -44,6 +44,8 @@ public enum ErrorCode {
     AI_API_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "CHAT409", "AI 응답 시간이 초과되었습니다."),
     AI_CONTEXT_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT410", "학습 자료를 찾을 수 없습니다."),
 
+    // 그룹 채팅
+    ALREADY_MEMBER(HttpStatus.BAD_REQUEST, "CHAT411", "이미 존재하는 멤버입니다"),
     // ==================== NOTIFICATION ====================
     INVALID_NOTIFICATION(HttpStatus.NOT_FOUND, "NOTI400", "존재하지 않는 알림입니다."),
     INVALID_NOTIFICATION_TYPE(HttpStatus.NOT_FOUND, "NOTI401", "존재하지 않는 알림 유형입니다."),

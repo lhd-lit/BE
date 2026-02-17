@@ -8,6 +8,8 @@ import LDHD.project.domain.group.web.dto.GroupDocumentAddResponse;
 import LDHD.project.domain.group.web.dto.StudyGroupCreateRequest;
 import LDHD.project.domain.group.web.dto.StudyGroupCreateResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,11 @@ public class StudyGroupController {
     // /api/groups?userId={userId}
     @Operation(summary = "스터디 그룹 생성", description = "새로운 스터디 그룹을 생성합니다.")
     @PostMapping
-    public ResponseEntity<GlobalResponse> createGroup(@RequestParam Long userId,
+    public ResponseEntity<GlobalResponse> createGroup(@Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                      @RequestHeader("X-USER-ID") Long currentUserId,
                                                       @RequestBody @Valid StudyGroupCreateRequest request){
 
-        StudyGroupCreateResponse response = studyGroupService.createGroup(userId,request);
+        StudyGroupCreateResponse response = studyGroupService.createGroup(currentUserId,request);
 
         return GlobalResponse.onSuccess(SuccessCode.CREATED, response);
     }
@@ -42,10 +45,12 @@ public class StudyGroupController {
     // /api/groups/{groupId}/documents?userId={userId}
     @Operation(summary = "그룹 학습 문서 추가", description = "특정 스터디 그룹에 학습 문서를 추가합니다.")
     @PostMapping("/{groupId}/documents")
-    public ResponseEntity<GlobalResponse> addDocument(@RequestParam Long userId,@PathVariable Long groupId,
-                                                             @RequestBody @Valid GroupDocumentAddRequest request
+    public ResponseEntity<GlobalResponse> addDocument(@PathVariable Long groupId,
+                                                      @Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                      @RequestHeader("X-USER-ID") Long currentUserId,
+                                                      @RequestBody @Valid GroupDocumentAddRequest request
     ) {
-        GroupDocumentAddResponse response = studyGroupService.addDocument(userId, groupId, request);
+        GroupDocumentAddResponse response = studyGroupService.addDocument(currentUserId, groupId, request);
 
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }

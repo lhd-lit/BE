@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -47,6 +48,13 @@ public class GlobalExceptionHandler {
             com.fasterxml.jackson.databind.JsonMappingException e) {
         log.error("JSON 매핑 오류: {}", e.getMessage());
         return GlobalResponse.onFailure(ErrorCode.VALIDATION_FAILED);
+    }
+
+    // X-USER-ID 헤더 누락
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<GlobalResponse> handleMissingHeader(MissingRequestHeaderException e) {
+        log.warn("필수 헤더 누락 - {}", e.getHeaderName());
+        return GlobalResponse.onFailure(ErrorCode.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
