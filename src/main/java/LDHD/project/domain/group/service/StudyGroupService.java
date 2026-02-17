@@ -53,7 +53,7 @@ public class StudyGroupService {
     public GroupDocumentAddResponse addDocument(Long userId, Long groupId, GroupDocumentAddRequest request){
 
         // 멤버 권한 검증
-        if (!groupMemberRepository.existsByStudyGroup_IdAndUser_Id(groupId, userId)) {
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
             throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
         }
 
@@ -85,7 +85,7 @@ public class StudyGroupService {
             throw new GeneralException(ErrorCode.GROUP_NOT_FOUND);
         }
         // 멤버 권한 검증
-        if(!groupMemberRepository.existsByStudyGroup_IdAndUser_Id(groupId, userId)) {
+        if(!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
             throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
         }
         // 문서 조회
