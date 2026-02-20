@@ -23,6 +23,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Slf4j
 @Configuration
@@ -82,6 +83,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration
+                .setMessageSizeLimit(524288)       // 512KB
+                .setSendBufferSizeLimit(1048576)    // 1MB
+                .setSendTimeLimit(20000);           // 20초
+    }
+
     // WebSocket 연결 시 JWT 인증
     private void authenticateWebSocket(StompHeaderAccessor accessor) {
         try {
@@ -121,8 +130,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             throw new GeneralException(ErrorCode.WEBSOCKET_AUTH_FAILED);
         }
     }
-
-
     // 구독 권한 검증
     // 1. 그룹 채팅방: /sub/group-chat/{chatRoomId} -> 해당 스터디 그룹의 멤버인지 확인
     // 2. AI 채팅방: /sub/ai-chat/{chatRoomId} -> 본인 채팅방인지 확인(SelfStudy와 더블 체크)
@@ -152,8 +159,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         }
 
         // 3. 개인 에러 큐 구독 (항상 허용)
-        else if (destination.startsWith("/user/queue/errors")) {
-            log.debug("에러 큐 구독 - userId: {}", userId);
+        else if (destination.startsWith("/user/queue/errors")||
+                destination.startsWith("/user/queue/notification")) { // 알림 구독 경로 추가
+            log.debug("에러 큐 구독 - userId: {}, destination: {}", userId, destination);
         }
     }
 
