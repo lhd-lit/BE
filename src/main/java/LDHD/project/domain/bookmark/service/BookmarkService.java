@@ -6,13 +6,18 @@ import LDHD.project.domain.bookmark.Bookmark;
 import LDHD.project.domain.bookmark.repository.BookmarkRepository;
 import LDHD.project.domain.bookmark.web.controller.dto.CreateBookmarkResponse;
 import LDHD.project.domain.bookmark.web.controller.dto.DeleteBookmarkResponse;
+import LDHD.project.domain.bookmark.web.controller.dto.GetBookmarkListResponse;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +67,14 @@ public class BookmarkService {
         bookmarkRepository.delete(bookmark);
 
         return new DeleteBookmarkResponse(selfStudyId, currentUserId);
+    }
+
+    // 즐겨찾기 목록 조회
+    public Page<GetBookmarkListResponse> getBookmarks(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        return bookmarkRepository.findByUserIdWithSelfStudy(userId, pageable)
+                .map(GetBookmarkListResponse::from);
     }
 
 }
