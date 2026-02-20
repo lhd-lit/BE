@@ -12,10 +12,14 @@ import LDHD.project.domain.group.entity.GroupMember;
 import LDHD.project.domain.group.entity.StudyGroup;
 import LDHD.project.domain.group.repository.GroupMemberRepository;
 import LDHD.project.domain.group.repository.StudyGroupRepository;
+import LDHD.project.domain.notification.event.GroupChatMemberInvitedEvent;
+import LDHD.project.domain.notification.event.GroupChatMessageSentEvent;
+import LDHD.project.domain.notification.event.GroupChatRoomCreatedEvent;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,7 @@ public class GroupChatService {
     private final GroupMemberRepository memberRepository;
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 그룹 채팅방 생성
     @Transactional(readOnly = false)
@@ -68,6 +73,20 @@ public class GroupChatService {
             // 보통 그룹 생성자가 채팅방을 만들므로 최소 1명 이상
             long countResult = memberRepository.countByStudyGroup_Id(studyGroup.getId());
             int memberCount = (int) countResult;
+
+            // 그룹 전체 멤버 ID 조회 후 이벤트 발행
+            List<Long> memberIds = memberRepository.findAllByStudyGroup_Id(studyGroup.getId())
+                    .stream()
+                    .map(m -> m.getUser().getId())
+                    .collect(Collectors.toList());
+
+            eventPublisher.publishEvent(new GroupChatRoomCreatedEvent(
+                    savedRoom.getId(),
+                    studyGroup.getId(),
+                    studyGroup.getName(),
+                    memberIds,
+                    requesterId   // 생성자 본인 제외용
+            ));
 
             return GroupChatRoomResponse.of(savedRoom, memberCount);
 
@@ -115,6 +134,25 @@ public class GroupChatService {
         if (!newMembers.isEmpty()) {
             memberRepository.saveAll(newMembers);
             log.info("그룹[{}] 초대 완료: {}명", studyGroup.getName(), newMembers.size());
+
+            // 초대된 사용자들에게만 이벤트 발행 (inviter 이름 조회)
+            User inviter = userRepository.findById(inviterId)
+                    .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+            List<Long> invitedUserIds = newMembers.stream()
+                    .map(m -> m.getUser().getId())
+                    .collect(Collectors.toList());
+
+            // 채팅방 ID 조회
+            Long chatRoomId = roomRepository.findByStudyGroup_Id(studyGroupId)
+                    .map(GroupChatRoom::getId)
+                    .orElseThrow(() -> new GeneralException(ErrorCode.CHATROOM_NOT_FOUND));
+
+            eventPublisher.publishEvent(new GroupChatMemberInvitedEvent(
+                    chatRoomId,
+                    inviter.getName(),  // User 엔티티에 getName() 있다고 가정
+                    invitedUserIds
+            ));
         }
     }
 
@@ -206,6 +244,20 @@ public class GroupChatService {
         messageRepository.save(message);
         log.info("그룹 메시지 저장 완료 - messageId: {}, chatRoomId: {}",
                 message.getId(), chatRoom.getId());
+
+        // ✅ 채팅방 전체 멤버 ID 조회 후 이벤트 발행
+        List<Long> memberIds = memberRepository
+                .findAllByStudyGroup_Id(chatRoom.getStudyGroup().getId())
+                .stream()
+                .map(m -> m.getUser().getId())
+                .collect(Collectors.toList());
+
+        eventPublisher.publishEvent(new GroupChatMessageSentEvent(
+                chatRoom.getId(),
+                user.getId(),
+                user.getName(),
+                memberIds
+        ));
 
         return GroupMessageResponse.from(message);
     }
