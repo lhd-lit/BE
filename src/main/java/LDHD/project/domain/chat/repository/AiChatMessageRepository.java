@@ -12,15 +12,10 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessage, Lo
     List<AiChatMessage> findByChatRoom_IdOrderByIdAsc(Long chatRoomId);
 
     // 최신 메시지 조회
-    Slice<AiChatMessage> findByChatRoom_IdOrderByCreatedAtDesc(
-            Long chatRoomId,
-            Pageable pageable
-    );
+    Slice<AiChatMessage> findByChatRoom_IdOrderByCreatedAtDesc(Long chatRoomId, Pageable pageable);
 
     // 이전 메시지 조회(커서 페이징)
-    Slice<AiChatMessage> findByChatRoom_IdAndCreatedAtBeforeOrderByCreatedAtDesc(
-            Long chatRoomId,
-            LocalDateTime cursor,
+    Slice<AiChatMessage> findByChatRoom_IdAndCreatedAtBeforeOrderByCreatedAtDesc(Long chatRoomId,LocalDateTime cursor,
             Pageable pageable
     );
 }

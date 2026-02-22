@@ -19,10 +19,7 @@ public interface GroupChatMessageRepository extends JpaRepository<GroupChatMessa
 
     // 신규 메시지 조회
     @EntityGraph(attributePaths = {"sender"})
-    Slice<GroupChatMessage> findByChatRoom_IdOrderByCreatedAtDesc(
-            Long chatRoomId,
-            Pageable pageable
-    );
+    Slice<GroupChatMessage> findByChatRoom_IdOrderByCreatedAtDesc( Long chatRoomId, Pageable pageable);
 
     // 이전 메시지 조회(커서 페이징)
     @EntityGraph(attributePaths = {"sender"})
@@ -33,11 +30,8 @@ public interface GroupChatMessageRepository extends JpaRepository<GroupChatMessa
     );
 
     // 읽지 않은 메시지 개수
-    @Query("SELECT COUNT(m) FROM GroupChatMessage m " +
-            "WHERE m.chatRoom.id = :chatRoomId " +
+    @Query("SELECT COUNT(m) FROM GroupChatMessage m " + "WHERE m.chatRoom.id = :chatRoomId " +
             "AND m.createdAt > :lastReadTime")
-    Long countNewMessages(
-            @Param("chatRoomId") Long chatRoomId,
-            @Param("lastReadTime") LocalDateTime lastReadTime
-    );
+
+    Long countNewMessages(@Param("chatRoomId") Long chatRoomId, @Param("lastReadTime") LocalDateTime lastReadTime);
 }

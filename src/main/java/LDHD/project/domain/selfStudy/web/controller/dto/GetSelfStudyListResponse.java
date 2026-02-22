@@ -23,7 +23,7 @@ public class GetSelfStudyListResponse {
                 .id(selfStudy.getId())
                 .title(selfStudy.getTitle())
                 .description(selfStudy.getDescription())
-                .fileUrl(selfStudy.getFileUrl())
+                .fileUrl(selfStudy.getS3Key())
                 .original_file_name(selfStudy.getOriginalFileName())
                 .writerName(selfStudy.getUploader().getName())
                 .build();

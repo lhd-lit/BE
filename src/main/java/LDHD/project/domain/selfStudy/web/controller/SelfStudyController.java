@@ -78,4 +78,36 @@ public class SelfStudyController {
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
 
+    // 최근 조회순 목록
+    @Operation(summary = "최근 조회한 SelfStudy 목록",
+            description = "마지막으로 조회한 순서로 목록을 반환합니다. 홈 화면 최근 조회 데이터로 활용합니다.")
+    @GetMapping("/recent")
+    public ResponseEntity<GlobalResponse> getRecentViewed(@RequestHeader("X-USER-ID") Long currentUserId,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "10") int size) {
+
+        Page<GetSelfStudyListResponse> response = selfStudyService.getRecentViewedList(currentUserId, page, size);
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // 단건 조회
+    @Operation(summary = "SelfStudy 단건 조회", description = "특정 게시물을 조회하고 최근 조회 시간을 갱신합니다.")
+    @GetMapping("/{selfStudyId}")
+    public ResponseEntity<GlobalResponse> getSelfStudy(@PathVariable Long selfStudyId,
+                                                       @RequestHeader("X-USER-ID") Long currentUserId) {
+
+        GetSelfStudyListResponse response = selfStudyService.getSelfStudy(selfStudyId, currentUserId);
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // SelfStudy 파일 조회
+    @Operation(summary = "SelfStudy 파일 조회", description = "특정 학습 문서의 문서 정보를 조회합니다.(본인 것만)")
+    @GetMapping("/{selfStudyId}/file")
+    public ResponseEntity<GlobalResponse> getSelfStudyFile(@PathVariable Long selfStudyId,
+                                                           @RequestHeader("X-USER-ID")Long currentUserId) {
+
+        SelfStudyFileResponse response = selfStudyService.getSelfStudyFile(selfStudyId, currentUserId);
+
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
 }

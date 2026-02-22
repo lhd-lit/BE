@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,9 @@ public class StudyGroup extends BaseEntity {
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupDocument> documents = new ArrayList<>();
 
+    @Column(name = "last_viewed_at")
+    private LocalDateTime lastViewedAt;
+
     @Builder
     public StudyGroup(String name, String description, User owner) {
         this.name = name;
@@ -65,4 +69,8 @@ public class StudyGroup extends BaseEntity {
         return group;
     }
 
+    // 마지막 조회 시간 기준
+    public void updateLastViewedAt() {
+        this.lastViewedAt = LocalDateTime.now();
+    }
 }

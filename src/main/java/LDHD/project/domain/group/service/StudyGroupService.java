@@ -1,5 +1,6 @@
 package LDHD.project.domain.group.service;
 
+import LDHD.project.common.aws.S3FileManager;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.domain.group.entity.GroupDocument;
@@ -14,7 +15,9 @@ import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ public class StudyGroupService {
     private final GroupDocumentRepository groupDocumentRepository;
     private final SelfStudyRepository selfStudyRepository;
     private final UserRepository userRepository;
+    private final S3FileManager s3FileManager;
 
     // 스터디 그룹 생성
     @Transactional
@@ -77,6 +81,47 @@ public class StudyGroupService {
         return GroupDocumentAddResponse.from(groupDocument);
     }
 
+    // 그룹 삭제
+    public void deleteStudyGroup(Long groupId, Long currentUserId) {
+
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        if (!group.getOwner().getId().equals(currentUserId)) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // 그룹에 연결된 문서 조회
+        var documents = groupDocumentRepository.findAllByStudyGroupId(groupId);
+
+        // S3 삭제 대상 수집
+        for (GroupDocument doc : documents) {
+
+            SelfStudy selfStudy = doc.getSelfStudy();
+
+            // 다른 그룹에서 사용 중인지 확인
+            boolean usedElsewhere =
+                    groupDocumentRepository.countBySelfStudy(selfStudy) > 1;
+
+            if (!usedElsewhere) {
+                // S3 먼저 삭제
+                s3FileManager.delete(selfStudy.getS3Key());
+            }
+        }
+
+        // DB 삭제 실행
+        deleteStudyGroupFromDb(group);
+    }
+
+    // DB에서 삭제
+    @Transactional
+    protected void deleteStudyGroupFromDb(StudyGroup group) {
+
+        groupDocumentRepository.deleteAllByStudyGroup(group);
+        groupMemberRepository.deleteAllByStudyGroup(group);
+        studyGroupRepository.delete(group);
+    }
+
     // 그룹 문서 조회
     public Page<GroupDocumentListResponse> getGroupDocuments(Long userId, Long groupId, Pageable pageable){
 
@@ -92,6 +137,57 @@ public class StudyGroupService {
         Page<GroupDocument> documents = groupDocumentRepository.findAllByStudyGroupId(groupId, pageable);
 
         return documents.map(GroupDocumentListResponse::from);
+    }
+
+    // 사용가 속한 그룹 목록 조회 (createdAt 기준)
+    public Page<GetStudyGroupListResponse> getMyGroups(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        return studyGroupRepository.findAllByMemberId(userId, pageable)
+                .map(GetStudyGroupListResponse::from);
+    }
+
+    // StudyGroup 단건 조회 + 마지막 조회 시간 갱신(lastViewedAt 기준)
+    @Transactional
+    public GetStudyGroupListResponse getStudyGroup(Long groupId, Long currentUserId) {
+
+        // 멤버 권한 검증
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, currentUserId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 조회 시 마지막 조회 시간 갱신
+        group.updateLastViewedAt();
+
+        return GetStudyGroupListResponse.from(group);
+    }
+    // 최근 조회한 순서로 그룹 목록 반환
+    public Page<GetStudyGroupListResponse> getRecentViewedGroups(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return studyGroupRepository.findAllByMemberIdOrderByLastViewedAt(userId, pageable)
+                .map(GetStudyGroupListResponse::from);
+    }
+
+    // 그룹 문서 파일 단건 조회
+    public GroupFileResponse getGroupFile(Long groupId, Long groupDocumentId, Long currentUserId) {
+
+        // 멤버 권한 검증
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, currentUserId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
+        // 해당 그룹의 문서인지 함께 검증
+        GroupDocument groupDocument = groupDocumentRepository.findByIdAndStudyGroupId(groupDocumentId, groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        // Presigned URL 생성 후 반환
+        String presignedUrl = s3FileManager.generatePresignedUrl(groupDocument.getSelfStudy().getS3Key());
+
+        return GroupFileResponse.from(groupDocument, presignedUrl);
     }
 
 }

@@ -5,6 +5,8 @@ import LDHD.project.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,9 +29,10 @@ public class SelfStudy extends BaseEntity {
     @Column
     private String description;
 
-    //S3 파일 URL
-    @Column(name = "file_Url", nullable = false)
-    private String fileUrl;
+    // fileUrl → s3Key (인프라 URL 대신 S3 객체 경로만 저장)
+    // 예: user/12/uuid_document.pdf
+    @Column(name = "s3_key", nullable = false)
+    private String s3Key;
 
     //원본 파일명(UI 표시 및 다운로드용)
     @Column(name = "original_file_name", nullable = false)
@@ -40,22 +43,27 @@ public class SelfStudy extends BaseEntity {
     @Column(name = "extracted_text", columnDefinition = "TEXT")
     private String extractedText;
 
+    @Column(name = "last_viewed_at")
+    private LocalDateTime lastViewedAt;
+
     @Builder
-    public SelfStudy(User uploader, String title, String description, String fileUrl, String originalFileName ,String extractedText) {
+    public SelfStudy(User uploader, String title, String description, String s3Key, String originalFileName
+            ,String extractedText) {
         this.uploader = uploader;
         this.title = title;
         this.description = description;
-        this.fileUrl = fileUrl;
+        this.s3Key = s3Key;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
     }
 
-    public static SelfStudy create(User uploader, String title, String description, String fileUrl, String originalFileName, String extractedText) {
+    public static SelfStudy create(User uploader, String title, String description, String s3Key,
+                                   String originalFileName, String extractedText) {
         return SelfStudy.builder()
                 .uploader(uploader)
                 .title(title)
                 .description(description)
-                .fileUrl(fileUrl)
+                .s3Key(s3Key)
                 .originalFileName(originalFileName)
                 .extractedText(extractedText)
                 .build();
@@ -67,4 +75,8 @@ public class SelfStudy extends BaseEntity {
         this.description = description;
     }
 
+    // 조회 시 갱신
+    public void updateLastViewedAt() {
+        this.lastViewedAt = LocalDateTime.now();
+    }
 }
