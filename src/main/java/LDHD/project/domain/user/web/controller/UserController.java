@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "User API", description = "회원 가입, 삭제, 수정, 프로필 조회 관련 API")
 @RequiredArgsConstructor
 @RestController
@@ -55,6 +57,17 @@ public class UserController {
     public ResponseEntity<GlobalResponse> getUserProfile(@PathVariable Long userId) {
         UserProfileResponse response = userService.getUserProfile(userId);
 
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // 사용자 검색(이메일 기반)
+    @Operation(summary = "사용자 이메일 검색", description = "이메일로 사용자를 검색합니다. 스터디 그룹 초대 시 사용합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<GlobalResponse> searchUser(@RequestParam String email,
+                                                     @RequestParam(required = false) List<Long> excludeUserIds,
+                                                     @RequestHeader("X-USER-ID") Long currentUserId) {
+
+        UserSearchResponse response = userService.searchByEmail(email, currentUserId, excludeUserIds);
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
 

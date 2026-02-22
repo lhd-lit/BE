@@ -13,9 +13,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     // 즐겨찾기 중복 검사(Service계층)에서 사용
     Optional<Bookmark> findByUser_IdAndSelfStudy_Id(Long user_id, Long selfStudy_id);
 
-    @Query("SELECT b FROM Bookmark b " +
-            "JOIN FETCH b.selfStudy s " +
-            "WHERE b.user.id = :userId " +
-            "ORDER BY b.createdAt DESC")
+    @Query("SELECT b FROM Bookmark b " + "JOIN FETCH b.selfStudy s " + "WHERE b.user.id = :userId " + "ORDER BY b.createdAt DESC")
     Page<Bookmark> findByUserIdWithSelfStudy(@Param("userId") Long userId, Pageable pageable);
 }

@@ -1,6 +1,7 @@
 package LDHD.project.domain.group.repository;
 
 import LDHD.project.domain.group.entity.GroupMember;
+import LDHD.project.domain.group.entity.StudyGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +24,6 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
     List<GroupMember> findAllByStudyGroup_Id(Long studyGroupId);
 
     int countByStudyGroup_Id(Long studyGroupId);
+
+    void deleteAllByStudyGroup(StudyGroup group);
 }

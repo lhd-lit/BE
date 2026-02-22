@@ -13,6 +13,7 @@ public enum ErrorCode {
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "COMMON400", "유효하지 않은 값입니다."),
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "COMMON401","이미 존재하는 리소스입니다."),
     ALREADY_READ(HttpStatus.CONFLICT, "COMMON402","이미 읽음 처리 되었습니다."),
+    INVALID_REQUEST(HttpStatus.CONFLICT, "COMMON403","유효하지 않은 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON500", "서버 에러, 관리자에게 문의 바랍니다."),
 
     // ==================== USER ====================
@@ -55,6 +56,9 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE401", "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE402", "파일 삭제에 실패했습니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "FILE403", "지원하지 않는 파일 형식입니다."),
+    FILE_NOT_FOUND(HttpStatus.BAD_REQUEST, "FILE404", "파일을 찾을 수 없습니다."),
+    FILE_SIZE_EXCEEDED( HttpStatus.BAD_REQUEST,"FILE405", "파일 크기는 50MB를 초과할 수 없습니다."),
+    INVALID_FILE_NAME( HttpStatus.BAD_REQUEST,"FILE406", "유효하지 않은 파일명입니다."),
 
     // ==================== AUTH (인증/인가) ====================
     // 권한

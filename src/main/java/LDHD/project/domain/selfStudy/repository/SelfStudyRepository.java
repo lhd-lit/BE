@@ -15,4 +15,10 @@ public interface SelfStudyRepository extends JpaRepository<SelfStudy,Long> {
 
     @Query("SELECT s FROM SelfStudy s JOIN FETCH s.uploader")
     Page<SelfStudy> findAll(Pageable pageable);
+
+    // 마지막 조회 시간 기준 내림차순 (미조회 항목 제외)
+    @Query("SELECT s FROM SelfStudy s JOIN FETCH s.uploader " + "WHERE s.uploader.id = :userId AND s.lastViewedAt IS NOT NULL " +
+            "ORDER BY s.lastViewedAt DESC")
+
+    Page<SelfStudy> findAllByUserIdOrderByLastViewedAt( @Param("userId") Long userId, Pageable pageable);
 }

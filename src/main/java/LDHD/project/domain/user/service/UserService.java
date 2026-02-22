@@ -9,6 +9,8 @@
     import lombok.RequiredArgsConstructor;
     import org.springframework.stereotype.Service;
 
+    import java.util.List;
+
     @Transactional(readOnly = true)
     @Service
     @RequiredArgsConstructor
@@ -111,5 +113,23 @@
                     ()-> new GeneralException(ErrorCode.USER_NOT_FOUND));
 
             return  UserProfileResponse.from(user);
+        }
+
+        // 사용자 검색(이메일 기반)
+        public UserSearchResponse searchByEmail(String email, Long currentUserId, List<Long> excludeUserIds) {
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+            // 1. 본인 검색 방지
+            if (user.getId().equals(currentUserId)) {
+                throw new GeneralException(ErrorCode.INVALID_REQUEST);
+            }
+
+            // 2. 이미 선택한 사용자 중복 선택 방지
+            boolean alreadySelected = excludeUserIds != null
+                    && excludeUserIds.contains(user.getId());
+
+            return UserSearchResponse.from(user, alreadySelected);
         }
     }
