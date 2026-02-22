@@ -79,7 +79,8 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
         // 프론트엔드 주소 허용
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173")); // 실제 프론트엔드 도메인 주소 넣기
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173",
+                "http://lit.io.kr:8080", "http://lit.io.kr")); // 실제 프론트엔드 도메인 주소 넣기
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
