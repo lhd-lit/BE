@@ -39,7 +39,6 @@ public class SelfStudy extends BaseEntity {
     private String originalFileName;
 
     //문서에서 추출된 전체 텍스트(AI용)
-    @Lob // DB에 긴 글 저장 가능하도록
     @Column(name = "extracted_text", columnDefinition = "TEXT")
     private String extractedText;
 
