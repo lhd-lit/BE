@@ -132,6 +132,12 @@ public class AiChatService {
 
     // 내 채팅방 목록 조회
     public List<Long> getUserChatRooms(Long userId) {
+
+        // 사용자 존재 여부 검증
+        if (!userRepository.existsById(userId)) {
+            throw new GeneralException(ErrorCode.USER_NOT_FOUND);
+        }
+
         return roomRepository.findByUser_Id(userId).stream()
                 .map(AiChatRoom::getId)
                 .collect(Collectors.toList());
