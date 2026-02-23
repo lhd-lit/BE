@@ -13,7 +13,9 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     boolean existsByStudyGroupIdAndUserId(Long studyGroupId, Long userId);
 
-    @Query("SELECT gm.user.id FROM GroupMember gm WHERE gm.studyGroup.id = :studyGroupId")
+    @Query("SELECT gm.studyGroup.id, COUNT(gm) FROM GroupMember gm " +
+            "WHERE gm.studyGroup.id IN :groupIds " +
+            "GROUP BY gm.studyGroup.id")
     List<Object[]> countMembersByStudyGroupIdsIn(@Param("groupIds") List<Long> groupIds);
 
     // 이미 멤버인 사용자 조회 (초대 시 중복 방지)
