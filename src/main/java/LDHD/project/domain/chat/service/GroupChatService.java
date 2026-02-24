@@ -245,7 +245,7 @@ public class GroupChatService {
         log.info("그룹 메시지 저장 완료 - messageId: {}, chatRoomId: {}",
                 message.getId(), chatRoom.getId());
 
-        // ✅ 채팅방 전체 멤버 ID 조회 후 이벤트 발행
+        // 채팅방 전체 멤버 ID 조회 후 이벤트 발행
         List<Long> memberIds = memberRepository
                 .findAllByStudyGroup_Id(chatRoom.getStudyGroup().getId())
                 .stream()

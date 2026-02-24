@@ -1,6 +1,6 @@
 package LDHD.project.domain.group.web.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class GroupDocumentAddRequest {
+public class GroupMemberInviteRequest {
 
-    @NotBlank(message = "제목은 필수입니다.")
-    private String title;
-
-    private String description;
+    @NotNull(message = "초대할 사용자 ID는 필수입니다.")
+    private Long userId;
 }

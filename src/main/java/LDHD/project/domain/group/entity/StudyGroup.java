@@ -73,4 +73,10 @@ public class StudyGroup extends BaseEntity {
     public void updateLastViewedAt() {
         this.lastViewedAt = LocalDateTime.now();
     }
+
+    // 수정(이름, 설명)
+    public void update(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
 }

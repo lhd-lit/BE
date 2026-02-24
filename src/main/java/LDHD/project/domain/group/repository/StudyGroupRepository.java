@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface StudyGroupRepository extends JpaRepository<StudyGroup, Long> {
 
     // 내가 속한 그룹 목록
@@ -19,4 +21,6 @@ public interface StudyGroupRepository extends JpaRepository<StudyGroup, Long> {
             "WHERE m.user.id = :userId AND g.lastViewedAt IS NOT NULL " + "ORDER BY g.lastViewedAt DESC")
 
     Page<StudyGroup> findAllByMemberIdOrderByLastViewedAt(@Param("userId") Long userId, Pageable pageable);
+
+    Optional<StudyGroup> findTopByMembers_User_IdAndLastViewedAtIsNotNullOrderByLastViewedAtDesc(Long userId);
 }

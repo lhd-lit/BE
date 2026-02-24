@@ -74,14 +74,11 @@ public class SelfStudyService {
         if (!selfStudy.getUploader().getId().equals(currentUserId)) {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
-        groupDocumentRepository.deleteBySelfStudy(selfStudy);
 
         // 3. S3 저장소에 있는 파일 삭제
         s3FileManager.delete(selfStudy.getS3Key());
         // PostgresSql DB에서 삭제
         deleteSelfStudyFromDb(selfStudy);
-
-
 
     }
 
@@ -105,6 +102,35 @@ public class SelfStudyService {
                 selfStudy.getTitle(),
                 selfStudy.getDescription()
         );
+    }
+
+    // 파일 교체 : update와 분리한 이유 -> 통합했을 시 title만 바꾸고 싶어도 file 교체 로직이 적용됨(단일 책임)
+    @Transactional
+    public SelfStudyFileResponse replaceSelfStudyFile(Long selfStudyId, Long currentUserId, MultipartFile file) {
+
+        SelfStudy selfStudy = selfStudyRepository.findById(selfStudyId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        if (!selfStudy.getUploader().getId().equals(currentUserId)) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (file.isEmpty()) {
+            throw new GeneralException(ErrorCode.VALIDATION_FAILED);
+        }
+
+        // 기존 S3 파일 삭제
+        s3FileManager.delete(selfStudy.getS3Key());
+
+        // 새 파일 업로드
+        String newS3Key = s3FileManager.upload(file, currentUserId);
+        String newExtractedText = fileTextParser.extractText(file);
+
+        // 엔티티 파일 정보 갱신
+        selfStudy.replaceFile(newS3Key, file.getOriginalFilename(), newExtractedText);
+
+        String presignedUrl = s3FileManager.generatePresignedUrl(newS3Key);
+        return SelfStudyFileResponse.of(selfStudy, presignedUrl);
     }
     // self-study 목록 조회(1.관리자용-all 2.사용자용-me)
     // 1. 관리자용(전체 조회)

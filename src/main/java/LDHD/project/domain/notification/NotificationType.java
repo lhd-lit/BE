@@ -16,6 +16,9 @@ public enum NotificationType {
     // 그룹 채팅 메시지 수신
     GROUP_CHAT_MESSAGE_RECEIVED("%s님이 메시지를 보냈습니다.");
 
+    // 스터디 그룹에 초대
+
+
     private final String messageTemplate;
 
     public String formatMessage(Object... args) {

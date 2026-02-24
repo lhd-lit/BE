@@ -55,6 +55,18 @@ public class SelfStudyController {
         return GlobalResponse.onSuccess(SuccessCode.UPDATED, response);
     }
 
+    // 파일 교체
+    @Operation(summary = "SelfStudy 파일 교체", description = "학습 문서 파일을 교체합니다.")
+    @PutMapping(value = "/{selfStudyId}/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<GlobalResponse> replaceSelfStudyFile(@PathVariable Long selfStudyId,
+                                                               @RequestHeader("X-USER-ID") Long currentUserId,
+                                                               @RequestPart("file") MultipartFile file) {
+
+        SelfStudyFileResponse response = selfStudyService.replaceSelfStudyFile(selfStudyId, currentUserId, file);
+
+        return GlobalResponse.onSuccess(SuccessCode.UPDATED, response);
+    }
+
     //게시물 목록 조회 기능
     //1. 관리자용
     @Operation(summary = "전체 게시물 목록 조회", description = "전체 게시물 목록을 조회합니다.")
@@ -79,8 +91,8 @@ public class SelfStudyController {
     }
 
     // 최근 조회 SelfStudy 단건 조회
-    @Operation(summary = "최근 조회한 SelfStudy 단건 조회", description = "마지막으로 조회한 가장 최근 데이터 1개를 반환합니다. 홈 화면 최근 조회 데이터로 활용합니다.")
-    @GetMapping
+    @Operation(summary = "최근 조회한 SelfStudy 단건 조회", description = "마지막으로 조회한 가장 최근 SelfStudy 1개를 반환합니다. 홈 화면 최근 조회 데이터로 활용합니다.")
+    @GetMapping("/recent")
     public ResponseEntity<GlobalResponse> getRecentViewed(@RequestHeader("X-USER-ID") Long currentUserId) {
 
         GetSelfStudyListResponse response = selfStudyService.getLatestViewedSelfStudy(currentUserId);

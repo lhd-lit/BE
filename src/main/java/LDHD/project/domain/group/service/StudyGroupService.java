@@ -3,23 +3,24 @@ package LDHD.project.domain.group.service;
 import LDHD.project.common.aws.S3FileManager;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
+import LDHD.project.common.utils.FileTextParser;
 import LDHD.project.domain.group.entity.GroupDocument;
 import LDHD.project.domain.group.entity.StudyGroup;
 import LDHD.project.domain.group.repository.GroupDocumentRepository;
 import LDHD.project.domain.group.repository.GroupMemberRepository;
 import LDHD.project.domain.group.repository.StudyGroupRepository;
 import LDHD.project.domain.group.web.dto.*;
-import LDHD.project.domain.selfStudy.SelfStudy;
-import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -29,9 +30,10 @@ public class StudyGroupService {
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupDocumentRepository groupDocumentRepository;
-    private final SelfStudyRepository selfStudyRepository;
     private final UserRepository userRepository;
     private final S3FileManager s3FileManager;
+    private final FileTextParser fileTextParser;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // 스터디 그룹 생성
     @Transactional
@@ -52,9 +54,25 @@ public class StudyGroupService {
         return StudyGroupCreateResponse.from(group);
     }
 
+    // 스터디 그룹 수정(이름, 설명)
+    @Transactional
+    public StudyGroupUpdateResponse updateStudyGroup(Long groupId, Long currentUserId, StudyGroupUpdateRequest request) {
+        // 그룹 존재 확인
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 방장 확인
+        if (!group.getOwner().getId().equals(currentUserId)) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        group.update(request.getName(), request.getDescription());
+        return StudyGroupUpdateResponse.from(group);
+    }
+
     // 그룹에 학습 자료(문서) 추가
     @Transactional
-    public GroupDocumentAddResponse addDocument(Long userId, Long groupId, GroupDocumentAddRequest request){
+    public GroupDocumentAddResponse addDocument(Long userId, Long groupId, GroupDocumentAddRequest request, MultipartFile file) {
 
         // 멤버 권한 검증
         if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
@@ -65,19 +83,24 @@ public class StudyGroupService {
         StudyGroup group = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
 
-        // 학습 자료 조회
-        SelfStudy selfStudy = selfStudyRepository.findById(request.getSelfStudyId())
-                .orElseThrow(() -> new GeneralException(ErrorCode.SELF_STUDY_NOT_FOUND));
+        // 업로더 조회
+        User uploader = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
 
-        // 문서 중복 검증
-        if (groupDocumentRepository.existsByStudyGroupAndSelfStudy(group, selfStudy)) {
-            throw new GeneralException(ErrorCode.DUPLICATE_GROUP_DOCUMENT);
-        }
+        // 2. 파일 유효성 검사
+        if(file.isEmpty()){throw new GeneralException(ErrorCode.VALIDATION_FAILED);}
 
-        // 문서 생성 및 저장
-        GroupDocument groupDocument = GroupDocument.create(group, selfStudy);
+        // userId 전달 → user/{userId}/uuid_file.pdf 경로로 저장 & key만 반환 (URL 아님)
+        String s3Key = s3FileManager.upload(file, userId);
+        String extractedText = fileTextParser.extractText(file);
+
+        GroupDocument groupDocument = GroupDocument.create(
+                group, uploader,
+                request.getTitle(), request.getDescription(),
+                s3Key, file.getOriginalFilename(), extractedText
+        );
+
         groupDocumentRepository.save(groupDocument);
-
         return GroupDocumentAddResponse.from(groupDocument);
     }
 
@@ -91,25 +114,13 @@ public class StudyGroupService {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 
-        // 그룹에 연결된 문서 조회
+        // GroupDocument에서 직접 s3Key 사용
         var documents = groupDocumentRepository.findAllByStudyGroupId(groupId);
 
-        // S3 삭제 대상 수집
         for (GroupDocument doc : documents) {
-
-            SelfStudy selfStudy = doc.getSelfStudy();
-
-            // 다른 그룹에서 사용 중인지 확인
-            boolean usedElsewhere =
-                    groupDocumentRepository.countBySelfStudy(selfStudy) > 1;
-
-            if (!usedElsewhere) {
-                // S3 먼저 삭제
-                s3FileManager.delete(selfStudy.getS3Key());
-            }
+            s3FileManager.delete(doc.getS3Key());
         }
 
-        // DB 삭제 실행
         deleteStudyGroupFromDb(group);
     }
 
@@ -120,6 +131,50 @@ public class StudyGroupService {
         groupDocumentRepository.deleteAllByStudyGroup(group);
         groupMemberRepository.deleteAllByStudyGroup(group);
         studyGroupRepository.delete(group);
+    }
+
+    // 그룹 문서 수정 (업로더 본인만, title, description)
+    @Transactional
+    public GroupDocumentUpdateResponse updateGroupDocument(Long groupId, Long groupDocumentId, Long currentUserId,
+                                                           GroupDocumentUpdateRequest request) {
+
+        GroupDocument groupDocument = groupDocumentRepository
+                .findByIdAndStudyGroupId(groupDocumentId, groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        // 업로더인지 확인
+        if (!groupDocument.getUploader().getId().equals(currentUserId)) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        groupDocument.update(request.getTitle(), request.getDescription());
+        return GroupDocumentUpdateResponse.from(groupDocument);
+    }
+
+    // 그룹 문서 삭제 (업로더 본인 또는 방장만)
+    @Transactional
+    public void deleteGroupDocument(Long groupId, Long groupDocumentId, Long currentUserId) {
+
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 그룹 문서인지 검증
+        GroupDocument groupDocument = groupDocumentRepository
+                .findByIdAndStudyGroupId(groupDocumentId, groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        // 업로더 본인 또는 방장만 삭제 가능
+        boolean isUploader = groupDocument.getUploader().getId().equals(currentUserId);
+        boolean isOwner = group.getOwner().getId().equals(currentUserId);
+
+        // 업로더 or 방장인지 확인
+        if (!isUploader && !isOwner) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // S3 파일 삭제
+        s3FileManager.delete(groupDocument.getS3Key());
+        groupDocumentRepository.delete(groupDocument);
     }
 
     // 그룹 문서 조회
@@ -171,7 +226,16 @@ public class StudyGroupService {
         return studyGroupRepository.findAllByMemberIdOrderByLastViewedAt(userId, pageable)
                 .map(GetStudyGroupListResponse::from);
     }
+    // 홈 화면 - 가장 최근 조회한 StudyGroup 1개 반환
+    public GetStudyGroupListResponse getLatestViewedStudyGroup(Long userId) {
 
+        return studyGroupRepository
+                .findTopByMembers_User_IdAndLastViewedAtIsNotNullOrderByLastViewedAtDesc(userId)
+                .map(GetStudyGroupListResponse::from)
+                .orElse(null); // 한 번도 조회 안 했으면 null
+    }
+
+    @Transactional
     // 그룹 문서 파일 단건 조회
     public GroupFileResponse getGroupFile(Long groupId, Long groupDocumentId, Long currentUserId) {
 
@@ -184,8 +248,12 @@ public class StudyGroupService {
         GroupDocument groupDocument = groupDocumentRepository.findByIdAndStudyGroupId(groupDocumentId, groupId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
 
+        // 파일 조회 시 StudyGroup lastViewedAt 갱신
+        StudyGroup group = groupDocument.getStudyGroup();
+        group.updateLastViewedAt();
+
         // Presigned URL 생성 후 반환
-        String presignedUrl = s3FileManager.generatePresignedUrl(groupDocument.getSelfStudy().getS3Key());
+        String presignedUrl = s3FileManager.generatePresignedUrl(groupDocument.getS3Key());
 
         return GroupFileResponse.from(groupDocument, presignedUrl);
     }

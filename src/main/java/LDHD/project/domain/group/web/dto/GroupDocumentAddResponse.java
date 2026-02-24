@@ -1,32 +1,25 @@
-package LDHD.project.domain.group.web.dto;
+    package LDHD.project.domain.group.web.dto;
 
-import LDHD.project.domain.group.entity.GroupDocument;
-import LDHD.project.domain.selfStudy.SelfStudy;
-import lombok.Getter;
+    import LDHD.project.domain.group.entity.GroupDocument;
+    import LDHD.project.domain.selfStudy.SelfStudy;
+    import lombok.Builder;
+    import lombok.Getter;
 
+    @Builder
+    @Getter
+    public class GroupDocumentAddResponse {
 
-@Getter
-public class GroupDocumentAddResponse {
+        private Long groupDocumentId;
 
-    private Long groupDocumentId;
-    private Long selfStudyId;
+        private String title;
+        private String uploaderName;
 
-    private String title;
-    private String uploaderName;
+        public static GroupDocumentAddResponse from(GroupDocument document) {
 
-    private GroupDocumentAddResponse(GroupDocument document) {
-
-        this.groupDocumentId = document.getId();
-
-        SelfStudy selfStudy = document.getSelfStudy();
-        this.selfStudyId = selfStudy.getId();
-
-        this.title = selfStudy.getTitle();
-        // SelfStudy -> User(Uploader) -> Name
-        this.uploaderName = selfStudy.getUploader().getName();
+            return GroupDocumentAddResponse.builder()
+                    .groupDocumentId(document.getId())
+                    .title(document.getTitle())
+                    .uploaderName(document.getUploader().getName())
+                    .build();
+        }
     }
-
-    public static GroupDocumentAddResponse from(GroupDocument document) {
-        return new GroupDocumentAddResponse(document);
-    }
-}

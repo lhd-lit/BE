@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -13,18 +15,18 @@ import lombok.NoArgsConstructor;
 public class GroupDocumentListResponse { // 조회용 dto
 
     private Long groupDocumentId;
-    private Long selfStudyId;
     private String title;
     private String description;
     private String uploaderName;
+    private String originalFileName;
 
     public static GroupDocumentListResponse from(GroupDocument groupDocument) {
         return GroupDocumentListResponse.builder()
                 .groupDocumentId(groupDocument.getId())
-                .selfStudyId(groupDocument.getSelfStudy().getId())
-                .title(groupDocument.getSelfStudy().getTitle())
-                .description(groupDocument.getSelfStudy().getDescription())
-                .uploaderName(groupDocument.getSelfStudy().getUploader().getName())
+                .title(groupDocument.getTitle())
+                .description(groupDocument.getDescription())
+                .uploaderName(groupDocument.getUploader().getName())
+                .originalFileName(groupDocument.getOriginalFileName())
                 .build();
     }
 }

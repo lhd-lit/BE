@@ -33,8 +33,7 @@ public class NotificationService {
 
     // 알림 생성 + WebSocket 실시간 전송 + 인원 많을 때 대비 => 비동기 처리 필요
     @Transactional
-    public void sendNotifications(List<Long> receiverIds, NotificationType type,
-                                       String message, Long targetId){
+    public void sendNotifications(List<Long> receiverIds, NotificationType type, String message, Long targetId){
 
         // Id가 null, 비어있는 경우 불필요한 DB 접근 방지
         if (receiverIds == null || receiverIds.isEmpty()) {
