@@ -74,6 +74,13 @@ public class SelfStudy extends BaseEntity {
         this.description = description;
     }
 
+    // 파일 교체
+    public void replaceFile(String s3Key, String originalFileName, String extractedText) {
+        this.s3Key = s3Key;
+        this.originalFileName = originalFileName;
+        this.extractedText = extractedText;
+    }
+
     // 조회 시 갱신
     public void updateLastViewedAt() {
         this.lastViewedAt = LocalDateTime.now();

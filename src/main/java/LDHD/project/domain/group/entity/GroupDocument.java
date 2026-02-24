@@ -1,14 +1,15 @@
 package LDHD.project.domain.group.entity;
 
 import LDHD.project.common.entity.BaseEntity;
-import LDHD.project.domain.selfStudy.SelfStudy;
+import LDHD.project.domain.user.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "group_document")
 public class GroupDocument extends BaseEntity {
@@ -23,16 +24,60 @@ public class GroupDocument extends BaseEntity {
     private StudyGroup studyGroup; // 어느 그룹 문서인지
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "self_study_id", nullable = false)
-    private SelfStudy selfStudy; // 실제 문서 정보
+    @JoinColumn(name = "uploader_id", nullable = false)
+    private User uploader;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column
+    private String description;
+
+    @Column(name = "s3_key", nullable = false)
+    private String s3Key;
+
+    @Column(name = "original_file_name", nullable = false)
+    private String originalFileName;
+
+    @Column(name = "extracted_text", columnDefinition = "TEXT")
+    private String extractedText;
+
+    @Column(name = "last_viewed_at")
+    private LocalDateTime lastViewedAt;
 
 
-    private GroupDocument(StudyGroup studyGroup, SelfStudy selfStudy) {
+    @Builder
+    private GroupDocument(StudyGroup studyGroup, User uploader, String title, String description, String s3Key,
+                          String originalFileName, String extractedText) {
+
         this.studyGroup = studyGroup;
-        this.selfStudy = selfStudy;
+        this.uploader = uploader;
+        this.title = title;
+        this.description = description;
+        this.s3Key = s3Key;
+        this.originalFileName = originalFileName;
+        this.extractedText = extractedText;
     }
 
-    public static GroupDocument create(StudyGroup studyGroup, SelfStudy selfStudy) {
-        return new GroupDocument(studyGroup, selfStudy);
+    public static GroupDocument create(StudyGroup studyGroup, User uploader, String title, String description,
+                                       String s3Key, String originalFileName, String extractedText) {
+
+        return GroupDocument.builder()
+                .uploader(uploader)
+                .title(title)
+                .description(description)
+                .s3Key(s3Key)
+                .originalFileName(originalFileName)
+                .extractedText(extractedText)
+                .build();
+    }
+
+    public void updateLastViewedAt() {
+        this.lastViewedAt = LocalDateTime.now();
+    }
+
+    public void update(String title, String description) {
+        this.title = title;
+        this.description = description;
     }
 }

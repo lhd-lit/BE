@@ -1,7 +1,6 @@
 package LDHD.project.domain.group.web.dto;
 
 import LDHD.project.domain.group.entity.GroupDocument;
-import LDHD.project.domain.selfStudy.web.controller.dto.SelfStudyFileResponse;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,8 +16,8 @@ public class GroupFileResponse {
 
     public static GroupFileResponse from(GroupDocument document, String presignedUrl) {
         return GroupFileResponse.builder()
-                .title(document.getSelfStudy().getTitle())
-                .description(document.getSelfStudy().getDescription())
+                .title(document.getTitle())
+                .description(document.getDescription())
                 .presignedUrl(presignedUrl)
                 .build();
     }
