@@ -127,6 +127,7 @@ public class SelfStudyService {
 
         return selfStudies.map(GetSelfStudyListResponse::from);
     }
+    /*
     // SelfStudy 단건 조회 + lastViewedAt 갱신
     @Transactional
     public GetSelfStudyListResponse getSelfStudy(Long selfStudyId, Long currentUserId) {
@@ -150,6 +151,15 @@ public class SelfStudyService {
         return selfStudyRepository.findAllByUserIdOrderByLastViewedAt(userId, pageable)
                 .map(GetSelfStudyListResponse::from);
     }
+    */
+    // 최근 조회된 문서 1건 반환
+    public GetSelfStudyListResponse getLatestViewedSelfStudy(Long userId) {
+
+        return selfStudyRepository
+                .findTopByUploader_IdAndLastViewedAtIsNotNullOrderByLastViewedAtDesc(userId)
+                .map(GetSelfStudyListResponse::from)
+                .orElse(null); // 한 번도 조회 안 했으면 null 반환
+    }
 
     // SelfStudy 파일(학습 문서) 조회
     public SelfStudyFileResponse getSelfStudyFile(Long selfStudyId, Long currentUserId) {
@@ -162,6 +172,9 @@ public class SelfStudyService {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 
+        // lastViewedAt 갱신
+        selfStudy.updateLastViewedAt();
+
         // 1. S3Uploader를 통해 15분짜리 Presigned URL 즉시 생성
         String presignedUrl = s3FileManager.generatePresignedUrl(selfStudy.getS3Key());
 
@@ -172,9 +185,6 @@ public class SelfStudyService {
     // DB 삭제 전용
     @Transactional
     protected void deleteSelfStudyFromDb(SelfStudy selfStudy) {
-
-        // 그룹 문서 연결 제거
-        groupDocumentRepository.deleteBySelfStudy(selfStudy);
 
         // SelfStudy 삭제
         selfStudyRepository.delete(selfStudy);

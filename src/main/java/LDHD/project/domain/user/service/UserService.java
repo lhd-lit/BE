@@ -119,7 +119,11 @@
         public UserSearchResponse searchByEmail(String email, Long currentUserId, List<Long> excludeUserIds) {
 
             User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+                    .orElse(null);
+
+            if (user == null) {
+                return null;
+            }
 
             // 1. 본인 검색 방지
             if (user.getId().equals(currentUserId)) {

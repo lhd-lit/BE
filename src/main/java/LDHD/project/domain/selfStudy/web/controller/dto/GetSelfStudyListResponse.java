@@ -6,26 +6,30 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetSelfStudyListResponse {
-    Long id;
+
+    Long selfStudyId;
     String title;
     String description;
-    String fileUrl;
-    String original_file_name;
+    String originalFileName;
     String writerName;
+    LocalDateTime lastViewedAt;
 
     public static GetSelfStudyListResponse from(SelfStudy selfStudy) {
         return GetSelfStudyListResponse.builder()
-                .id(selfStudy.getId())
+                .selfStudyId(selfStudy.getId())
                 .title(selfStudy.getTitle())
                 .description(selfStudy.getDescription())
-                .fileUrl(selfStudy.getS3Key())
-                .original_file_name(selfStudy.getOriginalFileName())
+                .originalFileName(selfStudy.getOriginalFileName())
                 .writerName(selfStudy.getUploader().getName())
+                .lastViewedAt(selfStudy.getLastViewedAt())
                 .build();
     }
 }

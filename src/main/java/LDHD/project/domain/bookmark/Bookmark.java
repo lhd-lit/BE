@@ -2,6 +2,7 @@ package LDHD.project.domain.bookmark;
 
 
 import LDHD.project.common.entity.BaseEntity;
+import LDHD.project.domain.group.entity.StudyGroup;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.user.User;
 import jakarta.persistence.*;
@@ -32,6 +33,11 @@ public class Bookmark extends BaseEntity {
     @JoinColumn(name = "selfStudy_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     SelfStudy selfStudy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "studyGroup_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    StudyGroup studyGroup;
 
     public Bookmark(User user, SelfStudy selfStudy) {
         this.user = user;
