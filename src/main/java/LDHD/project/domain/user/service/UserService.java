@@ -2,6 +2,7 @@
 
     import LDHD.project.common.exception.GeneralException;
     import LDHD.project.common.response.ErrorCode;
+    import LDHD.project.domain.group.repository.GroupMemberRepository;
     import LDHD.project.domain.user.User;
     import LDHD.project.domain.user.repository.UserRepository;
     import LDHD.project.domain.user.web.controller.dto.*;
@@ -17,6 +18,7 @@
     public class UserService {
 
         private final UserRepository userRepository;
+        private final GroupMemberRepository groupMemberRepository;
     /*
         // 회원 가입
         @Transactional // readOnly 기본 값: false
@@ -116,7 +118,7 @@
         }
 
         // 사용자 검색(이메일 기반)
-        public UserSearchResponse searchByEmail(String email, Long currentUserId, List<Long> excludeUserIds) {
+        public UserSearchResponse searchByEmail(String email, Long currentUserId, Long groupId) {
 
             User user = userRepository.findByEmail(email)
                     .orElse(null);
@@ -130,9 +132,12 @@
                 throw new GeneralException(ErrorCode.INVALID_REQUEST);
             }
 
-            // 2. 이미 선택한 사용자 중복 선택 방지
-            boolean alreadySelected = excludeUserIds != null
-                    && excludeUserIds.contains(user.getId());
+            // excludeId를 직접 넘길 필요 없이 groupId로 내부적으로 검토
+            boolean alreadySelected = false;
+            if (groupId != null) {
+                alreadySelected = groupMemberRepository
+                        .existsByStudyGroupIdAndUserId(groupId, user.getId());
+            }
 
             return UserSearchResponse.from(user, alreadySelected);
         }

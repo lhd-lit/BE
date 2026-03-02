@@ -172,5 +172,26 @@ public class StudyGroupController {
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
 
+    // 스터디 그룹에 멤버 초대
+    @Operation(summary = "스터디 그룹 멤버 초대", description = "스터디 그룹에 멤버를 초대합니다. (방장만 가능)")
+    @PostMapping("/{groupId}/members")
+    public ResponseEntity<GlobalResponse> inviteMember(@PathVariable Long groupId, @RequestHeader("X-USER-ID") Long currentUserId,
+                                                       @RequestBody @Valid GroupMemberInviteRequest request) {
+
+        GroupMemberResponse response = studyGroupService.inviteMember(groupId, currentUserId, request);
+
+        return GlobalResponse.onSuccess(SuccessCode.CREATED, response);
+    }
+
+    // 스터디 그룹에서 본인 탈퇴(방 나가기)
+    @Operation(summary = "스터디 그룹 탈퇴", description = "스터디 그룹에서 탈퇴합니다. (방장 불가)")
+    @DeleteMapping("/{groupId}/members/me")
+    public ResponseEntity<GlobalResponse> leaveGroup( @PathVariable Long groupId,
+                                                      @RequestHeader("X-USER-ID") Long currentUserId) {
+
+        studyGroupService.leaveGroup(groupId, currentUserId);
+
+        return GlobalResponse.onSuccess(SuccessCode.DELETED);
+    }
 }
 

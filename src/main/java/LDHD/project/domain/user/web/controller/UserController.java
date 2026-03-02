@@ -64,10 +64,10 @@ public class UserController {
     @Operation(summary = "사용자 이메일 검색", description = "이메일로 사용자를 검색합니다. 스터디 그룹 초대 시 사용합니다.")
     @GetMapping("/search")
     public ResponseEntity<GlobalResponse> searchUser(@RequestParam String email,
-                                                     @RequestParam(required = false) List<Long> excludeUserIds,
+                                                     @RequestParam(required = false) Long groupId,
                                                      @RequestHeader("X-USER-ID") Long currentUserId) {
 
-        UserSearchResponse response = userService.searchByEmail(email, currentUserId, excludeUserIds);
+        UserSearchResponse response = userService.searchByEmail(email, currentUserId, groupId);
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
 

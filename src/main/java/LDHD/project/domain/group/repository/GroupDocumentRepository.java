@@ -22,5 +22,6 @@ public interface GroupDocumentRepository extends JpaRepository<GroupDocument, Lo
 
     void deleteAllByStudyGroup(StudyGroup group);
 
+    List<GroupDocument> findAllByStudyGroupIdAndUploaderId(Long studyGroupId, Long uploaderId);
 
 }

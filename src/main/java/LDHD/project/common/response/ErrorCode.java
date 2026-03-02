@@ -87,6 +87,7 @@ public enum ErrorCode {
     NOT_GROUP_MEMBER(HttpStatus.FORBIDDEN, "GROUP401", "해당 그룹의 멤버가 아닙니다."),
     DUPLICATE_GROUP_DOCUMENT(HttpStatus.CONFLICT, "GROUP402", "이미 그룹에 등록된 문서입니다."),
     NOT_GROUP_LEADER(HttpStatus.FORBIDDEN, "GROUP403", "그룹 리더 권한이 필요합니다."),
+    DUPLICATE_GROUP_MEMBER(HttpStatus.CONFLICT, "GROUP404", "이미 그룹에 속한 멤버입니다."),
 
     // ==================== SELF STUDY ====================
     SELF_STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY400", "해당 학습 자료를 찾을 수 없습니다."),
