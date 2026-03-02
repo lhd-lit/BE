@@ -15,18 +15,20 @@ import java.time.LocalDateTime;
 public class GroupDocumentListResponse { // 조회용 dto
 
     private Long groupDocumentId;
+    private Long uploaderId;
     private String title;
     private String description;
     private String uploaderName;
     private String originalFileName;
 
-    public static GroupDocumentListResponse from(GroupDocument groupDocument) {
+    public static GroupDocumentListResponse from(GroupDocument groupDocument, boolean isUploaderInGroup) {
         return GroupDocumentListResponse.builder()
                 .groupDocumentId(groupDocument.getId())
                 .title(groupDocument.getTitle())
                 .description(groupDocument.getDescription())
-                .uploaderName(groupDocument.getUploader().getName())
                 .originalFileName(groupDocument.getOriginalFileName())
+                .uploaderId(isUploaderInGroup ? groupDocument.getUploader().getId() : null)
+                .uploaderName(isUploaderInGroup ? groupDocument.getUploader().getName() : null)
                 .build();
     }
 }

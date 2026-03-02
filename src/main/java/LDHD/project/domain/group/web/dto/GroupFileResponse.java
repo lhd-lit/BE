@@ -9,16 +9,20 @@ import lombok.Getter;
 public class GroupFileResponse {
 
 
-    private final String title;
-    private final String description;
-    private final String presignedUrl;
+    private Long uploaderId;
+    private String title;
+    private String description;
+    private String presignedUrl;
+    private String uploaderName;
 
+    public static GroupFileResponse from(GroupDocument document, String presignedUrl, boolean isUploaderInGroup) {
 
-    public static GroupFileResponse from(GroupDocument document, String presignedUrl) {
         return GroupFileResponse.builder()
                 .title(document.getTitle())
                 .description(document.getDescription())
                 .presignedUrl(presignedUrl)
+                .uploaderId(isUploaderInGroup ? document.getUploader().getId() : null)
+                .uploaderName(isUploaderInGroup ? document.getUploader().getName() : null)
                 .build();
     }
 }

@@ -63,6 +63,7 @@ public class GroupDocument extends BaseEntity {
                                        String s3Key, String originalFileName, String extractedText) {
 
         return GroupDocument.builder()
+                .studyGroup(studyGroup)
                 .uploader(uploader)
                 .title(title)
                 .description(description)

@@ -8,7 +8,6 @@ import LDHD.project.domain.chat.repository.GroupChatMessageRepository;
 import LDHD.project.domain.chat.repository.GroupChatRoomRepository;
 import LDHD.project.domain.chat.web.dto.*;
 import LDHD.project.domain.group.GroupRole;
-import LDHD.project.domain.group.entity.GroupMember;
 import LDHD.project.domain.group.entity.StudyGroup;
 import LDHD.project.domain.group.repository.GroupMemberRepository;
 import LDHD.project.domain.group.repository.StudyGroupRepository;
@@ -105,55 +104,37 @@ public class GroupChatService {
             throw new GeneralException(ErrorCode.UNAUTHORIZED);
         }
 
-        StudyGroup studyGroup = studyGroupRepository.findById(studyGroupId)
+        studyGroupRepository.findById(studyGroupId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
 
-        List<Long> targetIds = request.getUserIds();
-        List<User> usersToInvite = userRepository.findAllByIdIn(targetIds);
+        // 채팅방 존재 확인
+        Long chatRoomId = roomRepository.findByStudyGroup_Id(studyGroupId)
+                .map(GroupChatRoom::getId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.CHATROOM_NOT_FOUND));
 
-        if (usersToInvite.isEmpty()) {
-            throw new GeneralException(ErrorCode.USER_NOT_FOUND);
-        }
+        User inviter = userRepository.findById(inviterId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
 
-        // 이미 멤버인 사용자 필터링
-        List<GroupMember> existingMembers = memberRepository.findAllByStudyGroup_IdAndUser_IdIn(studyGroupId, targetIds);
-
-        Set<Long> existingUserIds = existingMembers.stream()
-                .map(m -> m.getUser().getId())
-                .collect(Collectors.toSet());
-
-        List<GroupMember> newMembers = usersToInvite.stream()
-                .filter(user -> !existingUserIds.contains(user.getId()))
-                .map(user -> GroupMember.builder()
-                        .user(user)
-                        .studyGroup(studyGroup)
-                        .role(GroupRole.MEMBER)
-                        .build())
+        // 이미 그룹 멤버인 사용자만 필터링 (멤버 추가 없음)
+        // 멤버 추가는 StudyGroupService.inviteMember()에서 담당
+        List<Long> validUserIds = request.getUserIds().stream()
+                .filter(userId -> memberRepository.existsByStudyGroupIdAndUserId(studyGroupId, userId))
                 .collect(Collectors.toList());
 
-        if (!newMembers.isEmpty()) {
-            memberRepository.saveAll(newMembers);
-            log.info("그룹[{}] 초대 완료: {}명", studyGroup.getName(), newMembers.size());
-
-            // 초대된 사용자들에게만 이벤트 발행 (inviter 이름 조회)
-            User inviter = userRepository.findById(inviterId)
-                    .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
-
-            List<Long> invitedUserIds = newMembers.stream()
-                    .map(m -> m.getUser().getId())
-                    .collect(Collectors.toList());
-
-            // 채팅방 ID 조회
-            Long chatRoomId = roomRepository.findByStudyGroup_Id(studyGroupId)
-                    .map(GroupChatRoom::getId)
-                    .orElseThrow(() -> new GeneralException(ErrorCode.CHATROOM_NOT_FOUND));
-
-            eventPublisher.publishEvent(new GroupChatMemberInvitedEvent(
-                    chatRoomId,
-                    inviter.getName(),  // User 엔티티에 getName() 있다고 가정
-                    invitedUserIds
-            ));
+        if (validUserIds.isEmpty()) {
+            log.info("채팅방 초대 가능한 멤버 없음 - studyGroupId: {}", studyGroupId);
+            return;
         }
+
+        // 채팅방 초대 알림만 발행
+        eventPublisher.publishEvent(new GroupChatMemberInvitedEvent(
+                chatRoomId,
+                inviter.getName(),
+                validUserIds
+        ));
+
+        log.info("채팅방 초대 알림 발행 완료 - chatRoomId: {}, 대상: {}명", chatRoomId, validUserIds.size());
+
     }
 
     // 사용자의 그룹 채팅방 목록 조회

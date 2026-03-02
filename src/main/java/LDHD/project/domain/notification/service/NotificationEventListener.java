@@ -4,6 +4,7 @@ import LDHD.project.domain.notification.NotificationType;
 import LDHD.project.domain.notification.event.GroupChatMemberInvitedEvent;
 import LDHD.project.domain.notification.event.GroupChatMessageSentEvent;
 import LDHD.project.domain.notification.event.GroupChatRoomCreatedEvent;
+import LDHD.project.domain.notification.event.GroupMemberInvitedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -86,6 +87,25 @@ public class NotificationEventListener {
                 NotificationType.GROUP_CHAT_MESSAGE_RECEIVED,
                 message,
                 event.getChatRoomId()
+        );
+    }
+
+    // 스터디 그룹 멤버 초대 이벤트 수신 → 초대된 사용자에게 알림
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleGroupMemberInvited(GroupMemberInvitedEvent event) {
+
+        log.debug("그룹 멤버 초대 이벤트 수신 - studyGroupId: {}, 초대 인원: {}명",
+                event.getStudyGroupId(), event.getInvitedUserIds().size());
+
+        String message = NotificationType.GROUP_MEMBER_INVITED
+                .formatMessage(event.getInviterName());
+
+        notificationService.sendNotifications(
+                event.getInvitedUserIds(),
+                NotificationType.GROUP_MEMBER_INVITED,
+                message,
+                event.getStudyGroupId() // targetId = studyGroupId (채팅방 아님)
         );
     }
 }
