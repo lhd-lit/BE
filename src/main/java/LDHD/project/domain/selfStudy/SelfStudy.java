@@ -45,19 +45,23 @@ public class SelfStudy extends BaseEntity {
     @Column(name = "last_viewed_at")
     private LocalDateTime lastViewedAt;
 
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize;
+
     @Builder
     public SelfStudy(User uploader, String title, String description, String s3Key, String originalFileName
-            ,String extractedText) {
+            ,String extractedText, Long fileSize) {
         this.uploader = uploader;
         this.title = title;
         this.description = description;
         this.s3Key = s3Key;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
+        this.fileSize = fileSize;
     }
 
     public static SelfStudy create(User uploader, String title, String description, String s3Key,
-                                   String originalFileName, String extractedText) {
+                                   String originalFileName, String extractedText, Long fileSize) {
         return SelfStudy.builder()
                 .uploader(uploader)
                 .title(title)
@@ -65,6 +69,7 @@ public class SelfStudy extends BaseEntity {
                 .s3Key(s3Key)
                 .originalFileName(originalFileName)
                 .extractedText(extractedText)
+                .fileSize(fileSize)
                 .build();
     }
 
@@ -75,10 +80,11 @@ public class SelfStudy extends BaseEntity {
     }
 
     // 파일 교체
-    public void replaceFile(String s3Key, String originalFileName, String extractedText) {
+    public void replaceFile(String s3Key, String originalFileName, String extractedText, Long fileSize) {
         this.s3Key = s3Key;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
+        this.fileSize = fileSize;
     }
 
     // 조회 시 갱신

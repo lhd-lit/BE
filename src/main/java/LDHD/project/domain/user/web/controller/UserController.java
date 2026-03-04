@@ -71,4 +71,13 @@ public class UserController {
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
 
+    // 사용자의 파일 용량 조회
+    @Operation(summary = "파일 용량 조회", description = "사용자의 파일 저장 용량 사용 현황을 조회합니다.")
+    @GetMapping("/storage")
+    public ResponseEntity<GlobalResponse> getStorageUsage(@RequestHeader("X-USER-ID") Long currentUserId) {
+
+        StorageResponse response = userService.getStorageUsage(currentUserId);
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
 }

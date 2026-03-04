@@ -23,4 +23,7 @@ public interface SelfStudyRepository extends JpaRepository<SelfStudy,Long> {
     Page<SelfStudy>findAllByUserIdOrderByLastViewedAt(Long userId, Pageable pageable);
     // 가장 최근 조회한 SelfStudy 1개 반환
     Optional<SelfStudy>findTopByUploader_IdAndLastViewedAtIsNotNullOrderByLastViewedAtDesc(Long userId);
+
+    @Query("SELECT COALESCE(SUM(s.fileSize), 0) FROM SelfStudy s WHERE s.uploader.id = :userId")
+    Long sumFileSizeByUserId(@Param("userId") Long userId);
 }

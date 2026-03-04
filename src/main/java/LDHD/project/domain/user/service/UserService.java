@@ -2,7 +2,9 @@
 
     import LDHD.project.common.exception.GeneralException;
     import LDHD.project.common.response.ErrorCode;
+    import LDHD.project.domain.group.repository.GroupDocumentRepository;
     import LDHD.project.domain.group.repository.GroupMemberRepository;
+    import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
     import LDHD.project.domain.user.User;
     import LDHD.project.domain.user.repository.UserRepository;
     import LDHD.project.domain.user.web.controller.dto.*;
@@ -18,6 +20,8 @@
     public class UserService {
 
         private final UserRepository userRepository;
+        private final SelfStudyRepository  selfStudyRepository;
+        private final GroupDocumentRepository groupDocumentRepository;
         private final GroupMemberRepository groupMemberRepository;
     /*
         // 회원 가입
@@ -140,5 +144,15 @@
             }
 
             return UserSearchResponse.from(user, alreadySelected);
+        }
+
+        // 사용자의 파일 사용량 조회
+        public StorageResponse getStorageUsage(Long userId){
+
+            long selfStudySize = selfStudyRepository.sumFileSizeByUserId(userId);
+            long groupDocSize = groupDocumentRepository.sumFileSizeByUploaderId(userId);
+            long totalUsed = selfStudySize + groupDocSize;
+
+            return StorageResponse.of(totalUsed);
         }
     }

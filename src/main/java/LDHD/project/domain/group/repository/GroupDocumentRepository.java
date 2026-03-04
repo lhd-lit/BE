@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,5 +25,8 @@ public interface GroupDocumentRepository extends JpaRepository<GroupDocument, Lo
     void deleteAllByStudyGroup(StudyGroup group);
 
     List<GroupDocument> findAllByStudyGroupIdAndUploaderId(Long studyGroupId, Long uploaderId);
+
+    @Query("SELECT COALESCE(SUM(d.fileSize), 0) FROM GroupDocument d WHERE d.uploader.id = :userId")
+    Long sumFileSizeByUploaderId(@Param("userId") Long userId);
 
 }

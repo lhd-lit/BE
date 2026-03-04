@@ -87,6 +87,20 @@ public class StudyGroupController {
 
         return GlobalResponse.onSuccess(SuccessCode.UPDATED, response);
     }
+
+    // 그룹 문서 파일 교체
+    @Operation(summary = "그룹 문서 파일 교체", description = "업로더 본인만 파일을 교체할 수 있습니다.")
+    @PatchMapping("/{groupId}/documents/{groupDocumentId}/file")
+    public ResponseEntity<GlobalResponse> replaceGroupDocumentFile( @PathVariable Long groupId,@PathVariable Long groupDocumentId,
+                                                                    @RequestPart MultipartFile file,
+                                                                    @Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                                    @RequestHeader("X-USER-ID") Long currentUserId) {
+
+        GroupFileResponse response =
+                studyGroupService.replaceGroupDocumentFile(groupId, groupDocumentId, currentUserId, file);
+
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
     /*
         // 단건 조회 + lastViewedAt 갱신
         @Operation(summary = "스터디 그룹 단건 조회", description = "특정 스터디 그룹을 조회하고 최근 조회 시간을 갱신합니다.")
