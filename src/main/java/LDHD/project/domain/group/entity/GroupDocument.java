@@ -45,10 +45,13 @@ public class GroupDocument extends BaseEntity {
     @Column(name = "last_viewed_at")
     private LocalDateTime lastViewedAt;
 
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize;
+
 
     @Builder
     private GroupDocument(StudyGroup studyGroup, User uploader, String title, String description, String s3Key,
-                          String originalFileName, String extractedText) {
+                          String originalFileName, String extractedText, Long fileSize) {
 
         this.studyGroup = studyGroup;
         this.uploader = uploader;
@@ -57,10 +60,11 @@ public class GroupDocument extends BaseEntity {
         this.s3Key = s3Key;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
+        this.fileSize = fileSize;
     }
 
     public static GroupDocument create(StudyGroup studyGroup, User uploader, String title, String description,
-                                       String s3Key, String originalFileName, String extractedText) {
+                                       String s3Key, String originalFileName, String extractedText, Long fileSize) {
 
         return GroupDocument.builder()
                 .studyGroup(studyGroup)
@@ -70,11 +74,21 @@ public class GroupDocument extends BaseEntity {
                 .s3Key(s3Key)
                 .originalFileName(originalFileName)
                 .extractedText(extractedText)
+                .fileSize(fileSize)
                 .build();
     }
 
     public void updateLastViewedAt() {
         this.lastViewedAt = LocalDateTime.now();
+    }
+
+    // 파일 교체
+    public void replaceFile(String s3Key, String originalFileName,
+                            String extractedText, Long fileSize) {
+        this.s3Key = s3Key;
+        this.originalFileName = originalFileName;
+        this.extractedText = extractedText;
+        this.fileSize = fileSize;
     }
 
     public void update(String title, String description) {

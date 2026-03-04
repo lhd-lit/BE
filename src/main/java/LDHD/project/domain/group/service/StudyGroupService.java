@@ -120,7 +120,8 @@ public class StudyGroupService {
         GroupDocument groupDocument = GroupDocument.create(
                 group, uploader,
                 request.getTitle(), request.getDescription(),
-                s3Key, file.getOriginalFilename(), extractedText
+                s3Key, file.getOriginalFilename(), extractedText,
+                file.getSize()
         );
 
         groupDocumentRepository.save(groupDocument);
@@ -173,6 +174,49 @@ public class StudyGroupService {
 
         groupDocument.update(request.getTitle(), request.getDescription());
         return GroupDocumentUpdateResponse.from(groupDocument);
+    }
+
+    // 그룹 파일 수정
+    @Transactional
+    public GroupFileResponse replaceGroupDocumentFile(Long groupId, Long groupDocumentId,
+                                                      Long currentUserId, MultipartFile file) {
+
+        // 그룹 멤버 여부 확인
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, currentUserId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
+        // 해당 그룹 문서인지 확인
+        GroupDocument groupDocument = groupDocumentRepository
+                .findByIdAndStudyGroupId(groupDocumentId, groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        // 업로더 본인만 교체 가능
+        if (!groupDocument.getUploader().getId().equals(currentUserId)) {
+            throw new GeneralException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (file.isEmpty()) {
+            throw new GeneralException(ErrorCode.VALIDATION_FAILED);
+        }
+
+        // 기존 S3 파일 삭제
+        s3FileManager.delete(groupDocument.getS3Key());
+
+        // 새 파일 업로드
+        String newS3Key = s3FileManager.upload(file, currentUserId);
+        String newExtractedText = fileTextParser.extractText(file);
+
+        // 파일 정보 갱신
+        groupDocument.replaceFile(newS3Key, file.getOriginalFilename(),
+                newExtractedText, file.getSize());
+
+        // 업로더 그룹 멤버 여부 확인
+        boolean isUploaderInGroup = groupMemberRepository
+                .existsByStudyGroupIdAndUserId(groupId, groupDocument.getUploader().getId());
+
+        String presignedUrl = s3FileManager.generatePresignedUrl(newS3Key);
+        return GroupFileResponse.from(groupDocument, presignedUrl, isUploaderInGroup);
     }
 
     // 그룹 문서 삭제 (업로더 본인 또는 방장만)

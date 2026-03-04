@@ -50,7 +50,8 @@ public class SelfStudyService {
                 user, request.getTitle(),
                 request.getDescription(),
                 s3Key, file.getOriginalFilename(),
-                extractedText
+                extractedText,
+                file.getSize()
         );
 
         selfStudyRepository.save(selfStudy);
@@ -127,7 +128,7 @@ public class SelfStudyService {
         String newExtractedText = fileTextParser.extractText(file);
 
         // 엔티티 파일 정보 갱신
-        selfStudy.replaceFile(newS3Key, file.getOriginalFilename(), newExtractedText);
+        selfStudy.replaceFile(newS3Key, file.getOriginalFilename(), newExtractedText, file.getSize());
 
         String presignedUrl = s3FileManager.generatePresignedUrl(newS3Key);
         return SelfStudyFileResponse.of(selfStudy, presignedUrl);
