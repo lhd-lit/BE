@@ -1,12 +1,10 @@
-package LDHD.project.domain.group.web.dto;
+package LDHD.project.domain.group.web.dto.document;
 
 import LDHD.project.domain.group.entity.GroupDocument;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Builder

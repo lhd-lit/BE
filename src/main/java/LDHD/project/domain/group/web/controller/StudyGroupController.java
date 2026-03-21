@@ -1,9 +1,11 @@
-package LDHD.project.domain.group.web;
-import LDHD.project.domain.group.web.dto.GroupDocumentListResponse;
+package LDHD.project.domain.group.web.controller;
+import LDHD.project.domain.group.web.dto.document.*;
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
 import LDHD.project.domain.group.service.StudyGroupService;
-import LDHD.project.domain.group.web.dto.*;
+import LDHD.project.domain.group.web.dto.group.*;
+import LDHD.project.domain.group.web.dto.member.GroupMemberInviteRequest;
+import LDHD.project.domain.group.web.dto.member.GroupMemberResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;

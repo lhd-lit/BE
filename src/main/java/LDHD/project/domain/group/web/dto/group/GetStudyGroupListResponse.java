@@ -1,6 +1,5 @@
-package LDHD.project.domain.group.web.dto;
+package LDHD.project.domain.group.web.dto.group;
 
-import LDHD.project.domain.group.entity.GroupDocument;
 import LDHD.project.domain.group.entity.StudyGroup;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package LDHD.project.domain.quote.Repository;
+package LDHD.project.domain.quote.repository;
 
 import LDHD.project.domain.quote.Quote;
 import org.springframework.data.jpa.repository.JpaRepository;

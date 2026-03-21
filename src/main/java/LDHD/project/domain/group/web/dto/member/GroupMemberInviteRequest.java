@@ -1,4 +1,4 @@
-package LDHD.project.domain.group.web.dto;
+package LDHD.project.domain.group.web.dto.member;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
