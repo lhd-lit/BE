@@ -45,7 +45,7 @@ public class GroupDocument extends BaseEntity {
     @Column(name = "last_viewed_at")
     private LocalDateTime lastViewedAt;
 
-    @Column(name = "file_size", nullable = false)
+    @Column(name = "file_size", nullable = true)
     private Long fileSize;
 
 
