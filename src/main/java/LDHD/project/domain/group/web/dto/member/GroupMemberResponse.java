@@ -1,4 +1,4 @@
-package LDHD.project.domain.group.web.dto;
+package LDHD.project.domain.group.web.dto.member;
 
 import LDHD.project.domain.group.entity.GroupMember;
 import lombok.Builder;

@@ -2,7 +2,6 @@ package LDHD.project.domain.quote.web.controller;
 
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
-import LDHD.project.domain.quote.Repository.QuoteRepository;
 import LDHD.project.domain.quote.service.QuoteService;
 import LDHD.project.domain.quote.web.controller.dto.QuoteResponse;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,4 +1,4 @@
-package LDHD.project.domain.group.web.dto;
+package LDHD.project.domain.group.web.dto.group;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
