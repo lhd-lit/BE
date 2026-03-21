@@ -68,6 +68,9 @@ dependencies {
 
     // Thymeleaf 템플릿 엔진
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // WebClient 추가 (AI 서버 HTTP 통신용)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {
