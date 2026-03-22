@@ -121,29 +121,38 @@
             return  UserProfileResponse.from(user);
         }
 
-        // 사용자 검색(이메일 기반)
-        public UserSearchResponse searchByEmail(String email, Long currentUserId, Long groupId) {
+        /**
+         * 사용자 검색: 입력 텍스트가 이메일 로컬 파트(@ 앞)에 포함되면 매칭.
+         * 검색어에 @가 있으면 도메인은 무시하고 @ 앞만 사용한다.
+         */
+        public List<UserSearchResponse> searchByEmail(String email, Long currentUserId, Long groupId) {
 
-            User user = userRepository.findByEmail(email)
-                    .orElse(null);
+            String localQuery = extractLocalPartForSearch(email);
+            if (localQuery == null) {
+                return List.of();
+            }
 
-            if (user == null) {
+            return userRepository.findByEmailLocalPartContaining(localQuery).stream()
+                    .filter(u -> !u.getId().equals(currentUserId))
+                    .map(u -> {
+                        boolean alreadySelected = groupId != null
+                                && groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, u.getId());
+                        return UserSearchResponse.from(u, alreadySelected);
+                    })
+                    .toList();
+        }
+
+        /** 비교에 쓸 검색어: @ 이후(도메인)는 제거하고 앞부분만 trim */
+        private static String extractLocalPartForSearch(String raw) {
+            if (raw == null) {
                 return null;
             }
-
-            // 1. 본인 검색 방지
-            if (user.getId().equals(currentUserId)) {
-                throw new GeneralException(ErrorCode.INVALID_REQUEST);
+            String s = raw.trim();
+            int at = s.indexOf('@');
+            if (at >= 0) {
+                s = s.substring(0, at).trim();
             }
-
-            // excludeId를 직접 넘길 필요 없이 groupId로 내부적으로 검토
-            boolean alreadySelected = false;
-            if (groupId != null) {
-                alreadySelected = groupMemberRepository
-                        .existsByStudyGroupIdAndUserId(groupId, user.getId());
-            }
-
-            return UserSearchResponse.from(user, alreadySelected);
+            return s.isEmpty() ? null : s;
         }
 
         // 사용자의 파일 사용량 조회
