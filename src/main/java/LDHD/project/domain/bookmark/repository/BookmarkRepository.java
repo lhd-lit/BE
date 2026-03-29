@@ -15,4 +15,9 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     @Query("SELECT b FROM Bookmark b " + "JOIN FETCH b.selfStudy s " + "WHERE b.user.id = :userId " + "ORDER BY b.createdAt DESC")
     Page<Bookmark> findByUserIdWithSelfStudy(@Param("userId") Long userId, Pageable pageable);
+
+    Optional<Bookmark> findByUser_IdAndStudyGroup_Id(Long userId, Long studyGroupId);
+
+    @Query("SELECT b FROM Bookmark b JOIN FETCH b.studyGroup WHERE b.user.id = :userId " + "AND b.studyGroup IS NOT NULL")
+    Page<Bookmark> findByUserIdWithStudyGroup(@Param("userId") Long userId, Pageable pageable);
 }

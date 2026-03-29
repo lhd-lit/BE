@@ -44,5 +44,10 @@ public class Bookmark extends BaseEntity {
         this.selfStudy = selfStudy;
     }
 
+    public Bookmark(User user, StudyGroup studyGroup) {
+        this.user = user;
+        this.studyGroup = studyGroup;
+    }
+
 
 }
