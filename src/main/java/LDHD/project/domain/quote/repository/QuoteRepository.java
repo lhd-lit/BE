@@ -9,6 +9,6 @@ import java.util.Optional;
 public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     // RANDOM 함수로 1개 무작위로 가져오기
-    @Query(value = "SELECT * FROM quote ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM quotes ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
     Optional<Quote> findRandomQuote();
 }
