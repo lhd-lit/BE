@@ -1,4 +1,6 @@
 package LDHD.project.domain.group.web.controller;
+import LDHD.project.common.aws.web.dto.GroupDocumentConfirmRequest;
+import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
 import LDHD.project.domain.group.web.dto.document.*;
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
@@ -147,7 +149,7 @@ public class StudyGroupController {
         GetStudyGroupListResponse response = studyGroupService.getLatestViewedStudyGroup(currentUserId);
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
-
+/*
     // 그룹에 학습 문서 추가
     // /api/groups/{groupId}/documents?userId={userId}
     @Operation(summary = "그룹 학습 문서 추가", description = "특정 스터디 그룹에 학습 문서를 추가합니다.")
@@ -161,7 +163,7 @@ public class StudyGroupController {
 
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
     }
-
+*/
     // 그룹 문서 목록 조회 API
     @Operation(summary = "그룹 학습 문서 목록 조회", description = "그룹 내 학습 문서의 목록을 조회합니다.(그룹 멤버만 조회 가능)")
     @GetMapping("/{groupId}/documents")
@@ -208,6 +210,37 @@ public class StudyGroupController {
         studyGroupService.leaveGroup(groupId, currentUserId);
 
         return GlobalResponse.onSuccess(SuccessCode.DELETED);
+    }
+
+    // 그룹 문서 업로드용 Presigned URL 발급
+    // POST /api/groups/{groupId}/documents/presigned-url
+    @Operation(summary = "그룹 문서 업로드용 Presigned URL 발급",
+            description = "파일명만 전송하면 S3 직접 업로드용 Presigned URL을 반환합니다."+
+                    "FE는 반환된 presignedUrl로 S3에 직접 PUT 업로드 후 /api/groups/{groupId}/documents/confirm을 호출해야 합니다.")
+    @PostMapping("/{groupId}/documents/presigned-url")
+    public ResponseEntity<GlobalResponse> getGroupDocumentPresignedUrl(@PathVariable Long groupId,
+                                                  @Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                                       @RequestHeader("X-USER-ID") Long currentUserId,
+                                                                       @RequestParam String originalFileName) {
+
+        PresignedUploadResponse response = studyGroupService.getGroupDocumentPresignedUrl(groupId, currentUserId, originalFileName);
+
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // 업로드 완료 후 그룹 문서 DB 저장
+    // POST /api/groups/{groupId}/documents/confirm
+    @Operation(summary = "그룹 문서 DB 저장 (업로드 완료 후 호출)", description = "S3 직접 업로드 완료 후 DB에 그룹 문서를 저장합니다." +
+            " presigned-url 발급 시 반환된 s3Key를 함께 전송해야 합니다.")
+    @PostMapping("/{groupId}/documents/confirm")
+    public ResponseEntity<GlobalResponse> confirmGroupDocument(@PathVariable Long groupId,
+                                                @Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                               @RequestHeader("X-USER-ID") Long currentUserId,
+                                                               @RequestBody @Valid GroupDocumentConfirmRequest request) {
+
+        GroupDocumentAddResponse response = studyGroupService.confirmGroupDocument(groupId, currentUserId, request);
+
+        return GlobalResponse.onSuccess(SuccessCode.CREATED, response);
     }
 }
 

@@ -1,15 +1,19 @@
 package LDHD.project.domain.selfStudy.service;
 
 import LDHD.project.common.aws.S3FileManager;
+import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
+import LDHD.project.common.aws.web.dto.SelfStudyConfirmRequest;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.utils.FileTextParser;
+import LDHD.project.domain.chat.client.AiClient;
 import LDHD.project.domain.group.repository.GroupDocumentRepository;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.selfStudy.web.controller.dto.*;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,6 +34,8 @@ public class SelfStudyService {
     private final S3FileManager s3FileManager;
     private final FileTextParser fileTextParser;
     private final GroupDocumentRepository groupDocumentRepository;
+    private final AiClient  aiClient;
+   /*
     // self-study 생성 로직
     @Transactional
     public CreateSelfStudyResponse createSelfStudy( Long currentUserId, CreateSelfStudyRequest request, MultipartFile file) {
@@ -62,7 +69,7 @@ public class SelfStudyService {
                 selfStudy.getDescription()
         );
     }
-
+*/
     // self-study 삭제 로직
     @Transactional
     public void deleteSelfStudy(Long selfStudyId, Long currentUserId) {
@@ -216,5 +223,48 @@ public class SelfStudyService {
 
         // SelfStudy 삭제
         selfStudyRepository.delete(selfStudy);
+    }
+
+    // Presigned URL 발급 (파일명만 받음)
+    public PresignedUploadResponse getPresignedUploadUrl(Long currentUserId, String originalFileName) {
+
+        // 사용자 존재 확인
+        if (!userRepository.existsById(currentUserId)) {
+            throw new GeneralException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // S3 PUT Presigned URL 생성
+        return s3FileManager.generatePresignedUploadUrl(originalFileName, currentUserId);
+    }
+
+    // 업로드 완료 후 DB 저장
+    @Transactional
+    public CreateSelfStudyResponse confirmSelfStudy(Long currentUserId, SelfStudyConfirmRequest request) {
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+        // extractedText는 AI 서버에서 처리하므로 빈 문자열로 초기화
+        SelfStudy selfStudy = SelfStudy.create(
+                user,
+                request.getTitle(),
+                request.getDescription(),
+                request.getS3Key(),
+                request.getOriginalFileName(),
+                "",              // extractedText → AI 서버 업로드 후 채움
+                request.getFileSize()
+        );
+
+        selfStudyRepository.save(selfStudy);
+
+        // AI 서버 PDF 업로드는 별도 비동기 처리 필요
+        // (파일이 서버를 거치지 않으므로 S3에서 직접 읽어야 함)
+        log.info("SelfStudy DB 저장 완료 - selfStudyId: {}, userId: {}", selfStudy.getId(), currentUserId);
+
+        return new CreateSelfStudyResponse(
+                selfStudy.getId(),
+                selfStudy.getTitle(),
+                selfStudy.getDescription()
+        );
     }
 }
