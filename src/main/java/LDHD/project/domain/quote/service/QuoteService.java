@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class QuoteService {
 
-    private QuoteRepository quoteRepository;
+    private final QuoteRepository quoteRepository;
 
     @Transactional(readOnly = true)
     public QuoteResponse getRandomQuote() {

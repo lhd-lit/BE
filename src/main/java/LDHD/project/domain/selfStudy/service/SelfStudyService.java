@@ -188,7 +188,8 @@ public class SelfStudyService {
                 .orElse(null); // 한 번도 조회 안 했으면 null 반환
     }
 
-    // SelfStudy 파일(학습 문서) 조회
+    // SelfStudy 파일(학습 문서) 조회 — lastViewedAt 갱신이 DB에 반영되려면 readOnly가 아닌 트랜잭션이어야 함
+    @Transactional
     public SelfStudyFileResponse getSelfStudyFile(Long selfStudyId, Long currentUserId) {
 
         SelfStudy selfStudy = selfStudyRepository.findById(selfStudyId)
