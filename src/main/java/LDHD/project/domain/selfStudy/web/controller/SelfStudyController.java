@@ -1,5 +1,7 @@
 package LDHD.project.domain.selfStudy.web.controller;
 
+import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
+import LDHD.project.common.aws.web.dto.SelfStudyConfirmRequest;
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
 import LDHD.project.domain.selfStudy.service.SelfStudyService;
@@ -8,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -22,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SelfStudyController {
 
     private final SelfStudyService selfStudyService;
-
+/*
     //게시물 생성 기능
     @Operation(summary = "게시물 생성", description = "새로운 게시물을 등록합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // JSON 데이터와 파일 데이터 같이 보낼 수 있도록
@@ -34,7 +37,7 @@ public class SelfStudyController {
 
         return GlobalResponse.onSuccess(SuccessCode.CREATED, response);
     }
-
+*/
     //게시물 삭제 기능
     @Operation(summary = "게시물 삭제", description = "특정 게시물을 삭제합니다.")
     @DeleteMapping("/{selfStudyId}")
@@ -118,5 +121,31 @@ public class SelfStudyController {
         SelfStudyFileResponse response = selfStudyService.getSelfStudyFile(selfStudyId, currentUserId);
 
         return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // Presigned Url 발급
+    // POST /api/selfStudy/presigned-url
+    @Operation(summary = "업로드용 Presigned URL 발급", description = "파일명만 전송하면 S3 직접 업로드용 Presigned URL을 반환합니다." +
+            "FE는 반환된 presignedUrl로 S3에 직접 PUT 업로드 후\n" + "/api/selfStudy/confirm을 호출해야 합니다.")
+    @PostMapping("/presigned-url")
+    public ResponseEntity<GlobalResponse> getPresignedUrl(@RequestHeader("X-USER-ID") Long currentUserId,
+                                                          @RequestParam String originalFileName) {
+
+        PresignedUploadResponse response = selfStudyService.getPresignedUploadUrl(currentUserId, originalFileName);
+
+        return GlobalResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    // 업로드 완료 후 DB 저장
+    // POST /api/selfStudy/confirm
+    @Operation(summary = "SelfStudy DB 저장 (업로드 완료 후 호출)", description = "S3 직접 업로드 완료 후 DB에 SelfStudy를 저장합니다.\n" +
+            " presigned-url 발급 시 반환된 s3Key를 함께 전송해야 합니다.")
+    @PostMapping("/confirm")
+    public ResponseEntity<GlobalResponse> confirmSelfStudy(@RequestHeader("X-USER-ID") Long currentUserId,
+                                                           @RequestBody @Valid SelfStudyConfirmRequest request) {
+
+        CreateSelfStudyResponse response = selfStudyService.confirmSelfStudy(currentUserId, request);
+
+        return GlobalResponse.onSuccess(SuccessCode.CREATED, response);
     }
 }

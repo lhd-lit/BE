@@ -1,5 +1,6 @@
 package LDHD.project.common.aws;
 
+import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -124,6 +126,39 @@ public class S3FileManager {
             throw new GeneralException(ErrorCode.INVALID_FILE_NAME);
         }
         return originalFileName.replaceAll("[^a-zA-Z0-9.\\-]", "_");
+    }
+
+    // 클라이언트가 S3 에 직접 업로드할 때 사용
+    public PresignedUploadResponse generatePresignedUploadUrl(String originalFileName, Long userId) {
+        // 파일명 특수 문자 제거
+        String sanitizedName = sanitizeFileName(originalFileName);
+
+        // S3 Key 생성
+        String s3Key = "user/" + userId + "/" + UUID.randomUUID() + "_" + sanitizedName;
+
+        try{
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(s3Key)
+                    .build();
+
+            PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(10)) // 10분간 유효
+                    .putObjectRequest(putObjectRequest)
+                    .build();
+
+            String presignedUrl = s3Presigner.presignPutObject(presignRequest)
+                    .url()
+                    .toString();
+
+            log.info("PUT Presigned URL 생성 완료 - s3Key: {}", s3Key);
+
+            return PresignedUploadResponse.of(presignedUrl, s3Key, originalFileName);
+
+        }catch (Exception e) {
+            log.error("PUT Presigned URL 생성 실패 - userId: {}", userId, e);
+            throw new GeneralException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 }
 
