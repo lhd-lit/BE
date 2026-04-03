@@ -1,17 +1,12 @@
 package LDHD.project.domain.group.web.controller;
 
-import LDHD.project.common.exception.GeneralException;
-import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.response.GlobalResponse;
 import LDHD.project.common.response.SuccessCode;
-import LDHD.project.domain.group.entity.DocumentComment;
-import LDHD.project.domain.group.repository.DocumentCommentRepository;
 import LDHD.project.domain.group.service.DocumentCommentService;
 import LDHD.project.domain.group.web.dto.comment.CreateReplyRequest;
 import LDHD.project.domain.group.web.dto.comment.CreateRootCommentRequest;
 import LDHD.project.domain.group.web.dto.comment.DocumentCommentResponse;
 import LDHD.project.domain.group.web.dto.comment.UpdateCommentRequest;
-import LDHD.project.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -29,7 +24,6 @@ import java.util.List;
 @RequestMapping("/api/groups")
 public class DocumentCommentController {
     private final DocumentCommentService documentCommentService;
-    private final UserRepository userRepository;
 
     // 루트 댓글 생성(하이라이트 기반)
     @Operation(summary = "루트 댓글 생성", description = "문서에서 텍스트를 드래그해 댓글을 생성합니다.")

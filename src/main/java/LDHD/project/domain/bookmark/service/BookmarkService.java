@@ -4,9 +4,9 @@ import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.domain.bookmark.Bookmark;
 import LDHD.project.domain.bookmark.repository.BookmarkRepository;
-import LDHD.project.domain.bookmark.web.controller.dto.CreateBookmarkResponse;
-import LDHD.project.domain.bookmark.web.controller.dto.DeleteBookmarkResponse;
-import LDHD.project.domain.bookmark.web.controller.dto.GetBookmarkListResponse;
+import LDHD.project.domain.bookmark.web.controller.dto.*;
+import LDHD.project.domain.group.entity.StudyGroup;
+import LDHD.project.domain.group.repository.StudyGroupRepository;
 import LDHD.project.domain.selfStudy.SelfStudy;
 import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.user.User;
@@ -26,6 +26,7 @@ public class BookmarkService {
     private final BookmarkRepository bookmarkRepository;
     private final SelfStudyRepository selfStudyRepository;
     private final UserRepository userRepository;
+    private final StudyGroupRepository studyGroupRepository;
 
     @Transactional
     public CreateBookmarkResponse createBookmark(Long selfStudyId, Long currentUserId) {
@@ -77,4 +78,53 @@ public class BookmarkService {
                 .map(GetBookmarkListResponse::from);
     }
 
+    // 그룹 스터디 즐겨찾기 추가
+    @Transactional
+    public CreateGroupBookmarkResponse createGroupBookmark(Long studyGroupId, Long currentUserId) {
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+        StudyGroup studyGroup = studyGroupRepository.findById(studyGroupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 중복 즐겨찾기 방지
+        if (bookmarkRepository.findByUser_IdAndStudyGroup_Id(currentUserId, studyGroupId).isPresent()) {
+            throw new GeneralException(ErrorCode.DUPLICATE_RESOURCE);
+        }
+
+        Bookmark bookmark = new Bookmark(user, studyGroup);
+        Bookmark savedBookmark = bookmarkRepository.save(bookmark);
+
+        return new CreateGroupBookmarkResponse(
+                savedBookmark.getId(),
+                studyGroup.getId(),
+                user.getId()
+        );
+    }
+
+    // 그룹 스터디 즐겨찾기 삭제
+    @Transactional
+    public DeleteGroupBookmarkResponse deleteGroupBookmark(Long studyGroupId, Long currentUserId) {
+
+        studyGroupRepository.findById(studyGroupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_IdAndStudyGroup_Id(currentUserId, studyGroupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.POST_NOT_FOUND));
+
+        bookmarkRepository.delete(bookmark);
+
+        return new DeleteGroupBookmarkResponse(studyGroupId, currentUserId);
+    }
+
+    // 그룹 스터디 즐겨찾기 목록 조회
+    public Page<GetGroupBookmarkListResponse> getGroupBookmarks(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        return bookmarkRepository.findByUserIdWithStudyGroup(userId, pageable)
+                .map(GetGroupBookmarkListResponse::from);
+    }
 }
+

@@ -1,6 +1,8 @@
 package LDHD.project.domain.group.service;
 
 import LDHD.project.common.aws.S3FileManager;
+import LDHD.project.common.aws.web.dto.GroupDocumentConfirmRequest;
+import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.utils.FileTextParser;
@@ -95,7 +97,7 @@ public class StudyGroupService {
         group.update(request.getName(), request.getDescription());
         return StudyGroupUpdateResponse.from(group);
     }
-
+/*
     // 그룹에 학습 자료(문서) 추가
     @Transactional
     public GroupDocumentAddResponse addDocument(Long userId, Long groupId, GroupDocumentAddRequest request, MultipartFile file) {
@@ -130,7 +132,7 @@ public class StudyGroupService {
         groupDocumentRepository.save(groupDocument);
         return GroupDocumentAddResponse.from(groupDocument);
     }
-
+*/
     // 그룹 삭제
     @Transactional
     public void deleteStudyGroup(Long groupId, Long currentUserId) {
@@ -415,22 +417,58 @@ public class StudyGroupService {
                 .findByStudyGroup_IdAndUser_Id(groupId, currentUserId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.NOT_GROUP_MEMBER));
 
-        /*
-        // 본인이 올린 그룹 문서 조회
-        List<GroupDocument> myDocuments =
-                groupDocumentRepository.findAllByStudyGroupIdAndUploaderId(groupId, currentUserId);
-
-        // S3 파일 삭제
-        for (GroupDocument doc : myDocuments) {
-            s3FileManager.delete(doc.getS3Key());
-        }
-
-        // GroupDocument DB 삭제
-        groupDocumentRepository.deleteAll(myDocuments);
-
-
-         */
         // 멤버 삭제
         groupMemberRepository.delete(member);
+    }
+
+    // 그룹 문서 업로드용 Presigned URL 발급
+    public PresignedUploadResponse getGroupDocumentPresignedUrl(Long groupId, Long userId, String originalFileName) {
+
+        // 그룹 존재 확인
+        if (!studyGroupRepository.existsById(groupId)) {
+            throw new GeneralException(ErrorCode.GROUP_NOT_FOUND);
+        }
+
+        // 그룹 멤버 권한 확인
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
+        // S3 PUT Presigned URL 생성
+        return s3FileManager.generatePresignedUploadUrl(originalFileName, userId);
+    }
+
+    // 업로드 완료 후 그룹 문서 DB 저장
+    @Transactional
+    public GroupDocumentAddResponse confirmGroupDocument(Long groupId, Long userId, GroupDocumentConfirmRequest request) {
+
+        // 그룹 멤버 권한 확인
+        if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
+            throw new GeneralException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
+        // 그룹 조회
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 업로더 조회
+        User uploader = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+        GroupDocument groupDocument = GroupDocument.create(
+                group, uploader,
+                request.getTitle(),
+                request.getDescription(),
+                request.getS3Key(),
+                request.getOriginalFileName(),
+                "",                  // extractedText → 추후 AI 서버 연동으로 확장
+                request.getFileSize()
+        );
+
+        groupDocumentRepository.save(groupDocument);
+        log.info("그룹 문서 DB 저장 완료 - groupDocumentId: {}, groupId: {}, userId: {}",
+                groupDocument.getId(), groupId, userId);
+
+        return GroupDocumentAddResponse.from(groupDocument);
     }
 }
