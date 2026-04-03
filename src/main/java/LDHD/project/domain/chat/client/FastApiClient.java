@@ -41,11 +41,11 @@ public class FastApiClient implements AiClient {
         return aiWebClient.post()
                 .uri("/ai/ask") // FastAPI endpoint
                 .contentType(MediaType.APPLICATION_JSON) // JSON 요청
-                .accept(MediaType.TEXT_EVENT_STREAM) // 🔥 SSE 요청
+                .accept(MediaType.TEXT_EVENT_STREAM) // SSE 요청
                 .bodyValue(body) // Body 설정
                 .retrieve()
 
-                // 🔥 핵심: SSE를 안전하게 파싱
+                //  핵심: SSE를 안전하게 파싱
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
 
                 // data 부분만 추출

@@ -1,6 +1,7 @@
 package LDHD.project.domain.selfStudy.service;
 
 import LDHD.project.common.aws.S3FileManager;
+import LDHD.project.common.aws.web.dto.SelfStudyConfirmRequest;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.utils.FileTextParser;
@@ -10,6 +11,7 @@ import LDHD.project.domain.selfStudy.repository.SelfStudyRepository;
 import LDHD.project.domain.selfStudy.web.controller.dto.*;
 import LDHD.project.domain.user.User;
 import LDHD.project.domain.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -216,4 +219,38 @@ public class SelfStudyService {
         // SelfStudy 삭제
         selfStudyRepository.delete(selfStudy);
     }
+
+    @Transactional
+    public CreateSelfStudyResponse confirmSelfStudy(Long currentUserId,
+                                                    SelfStudyConfirmRequest request) {
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+        SelfStudy selfStudy = SelfStudy.create(
+                user,
+                request.getTitle(),
+                request.getDescription(),
+                request.getS3Key(),
+                request.getOriginalFileName(),
+                "",
+                request.getFileSize()
+        );
+
+        selfStudyRepository.save(selfStudy);
+
+        // namespace 설정 (DB 저장 후 ID 확정된 뒤)
+        String namespace = currentUserId + "_" + selfStudy.getId();
+        selfStudy.updateNamespace(namespace);
+
+        // AI 서버 PDF 업로드 (S3에서 직접 읽어야 함 - 추후 구현)
+        log.info("SelfStudy 저장 완료 - selfStudyId: {}, namespace: {}",
+                selfStudy.getId(), namespace);
+
+        return new CreateSelfStudyResponse(
+                selfStudy.getId(),
+                selfStudy.getTitle(),
+                selfStudy.getDescription()
+        );
+    }
+
 }
