@@ -29,6 +29,9 @@ public class SelfStudy extends BaseEntity {
     @Column
     private String description;
 
+    @Column(length = 255)
+    private String namespace;
+
     // fileUrl → s3Key (인프라 URL 대신 S3 객체 경로만 저장)
     // 예: user/12/uuid_document.pdf
     @Column(name = "s3_key", nullable = false)
@@ -49,11 +52,12 @@ public class SelfStudy extends BaseEntity {
     private Long fileSize;
 
     @Builder
-    public SelfStudy(User uploader, String title, String description, String s3Key, String originalFileName
+    public SelfStudy(User uploader, String title, String description, String namespace, String s3Key, String originalFileName
             ,String extractedText, Long fileSize) {
         this.uploader = uploader;
         this.title = title;
         this.description = description;
+        this.namespace = namespace;
         this.s3Key = s3Key;
         this.originalFileName = originalFileName;
         this.extractedText = extractedText;
@@ -90,5 +94,9 @@ public class SelfStudy extends BaseEntity {
     // 조회 시 갱신
     public void updateLastViewedAt() {
         this.lastViewedAt = LocalDateTime.now();
+    }
+
+    public void updateNamespace(String namespace) {
+        this.namespace = namespace;
     }
 }

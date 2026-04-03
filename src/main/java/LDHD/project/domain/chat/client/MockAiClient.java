@@ -4,26 +4,54 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import reactor.core.publisher.Flux;
+
+import java.time.Duration;
+
 @Slf4j
 @Component
-//@Profile("local") : local 에서만 작동하므로 서버 환경에서는 AiClient가 스프링에 빈으로 등록이 되지 않는 오류 발생
+@Profile("local")
 public class MockAiClient implements AiClient {
+
+    /*
     @Override
     public String generateResponseWithContext(
             String question,
             String context,
             String chatHistory
     ) {
-        log.info("MockAiClient 호출 - question: {}", question);
+        log.info("MockAiClient (동기) 호출 - question: {}", question);
 
-        // 3초 대기 시뮬레이션 (실제 AI API 호출 시뮬레이션)
+        // 3초 대기 (AI 호출 시뮬레이션)
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        // Mock 응답 생성
+        return buildMockResponse(question, context, chatHistory);
+    }
+*/
+    @Override
+    public Flux<String> streamResponse(
+            String sessionId,
+            String namespace,
+            String question
+    ) {
+        log.info("MockAiClient (스트리밍) 호출 - sessionId: {}, question: {}", sessionId, question);
+
+        String fullResponse = buildMockResponse(question, "mock context", "mock history");
+
+        // 문자열을 chunk 단위로 쪼개기
+        String[] chunks = fullResponse.split(" ");
+
+        return Flux.fromArray(chunks)
+                .delayElements(Duration.ofMillis(300))
+                .map(chunk -> chunk + " "); // 공백 복원
+    }
+
+    private String buildMockResponse(String question, String context, String chatHistory) {
+
         StringBuilder response = new StringBuilder();
 
         response.append("안녕하세요! 질문에 답변드리겠습니다.\n\n");
@@ -34,20 +62,24 @@ public class MockAiClient implements AiClient {
             String preview = context.length() > 100
                     ? context.substring(0, 100) + "..."
                     : context;
-            response.append("**학습 자료 내용:**\n").append(preview).append("\n\n");
+
+            response.append("**학습 자료 내용:**\n")
+                    .append(preview)
+                    .append("\n\n");
         }
 
-        // 대화 히스토리 확인
+        // 대화 히스토리 반영
         if (chatHistory != null && !chatHistory.isBlank()) {
-            response.append("*(이전 대화 내역을 참고했습니다)*\n\n");
+            response.append("*(이전 대화를 참고했습니다)*\n\n");
         }
 
         response.append("이것은 **Mock AI 응답**입니다.\n\n");
-        response.append("실제 환경에서는 Upstage Solar AI가 학습 자료를 분석하여 답변을 생성합니다.\n\n");
-        response.append("**주요 포인트:**\n");
-        response.append("1. 비동기 처리로 빠른 응답\n");
-        response.append("2. WebSocket으로 실시간 전송\n");
-        response.append("3. 문서 기반 정확한 답변\n");
+        response.append("실제 환경에서는 FastAPI + LLM이 응답을 생성합니다.\n\n");
+
+        response.append("**주요 특징:**\n");
+        response.append("1. 스트리밍 응답 지원\n");
+        response.append("2. WebSocket 실시간 전송\n");
+        response.append("3. 문서 기반 질의응답\n");
 
         return response.toString();
     }

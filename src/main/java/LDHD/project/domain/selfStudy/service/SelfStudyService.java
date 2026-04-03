@@ -1,7 +1,10 @@
 package LDHD.project.domain.selfStudy.service;
 
 import LDHD.project.common.aws.S3FileManager;
+<<<<<<< feat/connect/AI
+=======
 import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
+>>>>>>> develop
 import LDHD.project.common.aws.web.dto.SelfStudyConfirmRequest;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
@@ -225,6 +228,14 @@ public class SelfStudyService {
         selfStudyRepository.delete(selfStudy);
     }
 
+<<<<<<< feat/connect/AI
+    @Transactional
+    public CreateSelfStudyResponse confirmSelfStudy(Long currentUserId,
+                                                    SelfStudyConfirmRequest request) {
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
+
+=======
     // Presigned URL 발급 (파일명만 받음)
     public PresignedUploadResponse getPresignedUploadUrl(Long currentUserId, String originalFileName) {
 
@@ -245,21 +256,36 @@ public class SelfStudyService {
                 .orElseThrow(() -> new GeneralException(ErrorCode.USER_NOT_FOUND));
 
         // extractedText는 AI 서버에서 처리하므로 빈 문자열로 초기화
+>>>>>>> develop
         SelfStudy selfStudy = SelfStudy.create(
                 user,
                 request.getTitle(),
                 request.getDescription(),
                 request.getS3Key(),
                 request.getOriginalFileName(),
+<<<<<<< feat/connect/AI
+                "",
+=======
                 "",              // extractedText → AI 서버 업로드 후 채움
+>>>>>>> develop
                 request.getFileSize()
         );
 
         selfStudyRepository.save(selfStudy);
 
+<<<<<<< feat/connect/AI
+        // namespace 설정 (DB 저장 후 ID 확정된 뒤)
+        String namespace = currentUserId + "_" + selfStudy.getId();
+        selfStudy.updateNamespace(namespace);
+
+        // AI 서버 PDF 업로드 (S3에서 직접 읽어야 함 - 추후 구현)
+        log.info("SelfStudy 저장 완료 - selfStudyId: {}, namespace: {}",
+                selfStudy.getId(), namespace);
+=======
         // AI 서버 PDF 업로드는 별도 비동기 처리 필요
         // (파일이 서버를 거치지 않으므로 S3에서 직접 읽어야 함)
         log.info("SelfStudy DB 저장 완료 - selfStudyId: {}, userId: {}", selfStudy.getId(), currentUserId);
+>>>>>>> develop
 
         return new CreateSelfStudyResponse(
                 selfStudy.getId(),
@@ -267,4 +293,8 @@ public class SelfStudyService {
                 selfStudy.getDescription()
         );
     }
+<<<<<<< feat/connect/AI
+
+=======
+>>>>>>> develop
 }

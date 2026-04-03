@@ -18,4 +18,6 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessage, Lo
     Slice<AiChatMessage> findByChatRoom_IdAndCreatedAtBeforeOrderByCreatedAtDesc(Long chatRoomId,LocalDateTime cursor,
             Pageable pageable
     );
+
+    List<AiChatMessage> findByChatRoom_IdOrderByCreatedAtAsc(Long chatRoomId);
 }
