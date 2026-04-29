@@ -11,4 +11,7 @@ public interface AiClient {
      */
    // String generateResponseWithContext(String question, String context, String chatHistory);
     Flux<String> streamResponse(String sessionId, String namespace, String question);
+
+    // PDF 업로드 추가
+    String uploadPdf(byte[] fileBytes, String fileName, String namespace);
 }

@@ -9,6 +9,8 @@ import LDHD.project.domain.chat.entity.GroupChatRoom;
 import LDHD.project.domain.chat.repository.AiChatRoomRepository;
 import LDHD.project.domain.chat.repository.GroupChatRoomRepository;
 import LDHD.project.domain.chat.web.dto.AiStreamResponse;
+import LDHD.project.domain.group.entity.GroupDocument;
+import LDHD.project.domain.group.repository.GroupDocumentRepository;
 import LDHD.project.domain.group.repository.GroupMemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final GroupMemberRepository groupMemberRepository;
     private final GroupChatRoomRepository groupChatRoomRepository;
     private final AiChatRoomRepository aiChatRoomRepository;
+    private final GroupDocumentRepository groupDocumentRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
@@ -166,6 +169,31 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 destination.startsWith("/user/queue/notification")) { // 알림 구독 경로 추가
             log.debug("에러 큐 구독 - userId: {}, destination: {}", userId, destination);
         }
+        else if (destination.startsWith("/sub/document-comment/")) {
+            validateDocumentCommentSubscription(destination, userId);
+        }
+    }
+    // 문서 댓글 구독 검증 메서드 추가
+    private void validateDocumentCommentSubscription(String destination, Long userId) {
+        try {
+            Long documentId = extractChatRoomId(destination); // groupDocumentId 추출
+
+            // 해당 문서가 속한 그룹 조회
+            GroupDocument document = groupDocumentRepository.findById(documentId)
+                    .orElseThrow(() -> new AccessDeniedException("문서를 찾을 수 없습니다."));
+
+            Long groupId = document.getStudyGroup().getId();
+
+            if (!groupMemberRepository.existsByStudyGroupIdAndUserId(groupId, userId)) {
+                log.warn("문서 댓글 구독 거부 - userId: {}, documentId: {}", userId, documentId);
+                throw new AccessDeniedException("이 문서에 접근 권한이 없습니다.");
+            }
+
+            log.info("문서 댓글 구독 승인 - userId: {}, documentId: {}", userId, documentId);
+
+        } catch (NumberFormatException e) {
+            throw new AccessDeniedException("잘못된 문서 ID입니다.");
+        }
     }
 
     // 그룹 채팅방 구독 검증
@@ -241,5 +269,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             return null;
         }
     }
-
 }

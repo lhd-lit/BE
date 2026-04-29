@@ -1,10 +1,14 @@
 package LDHD.project.domain.chat.client;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Component;
 
 // WebClient
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 // SSE 처리
@@ -19,6 +23,7 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.Map;
 
+@Slf4j
 @Primary
 @Component
 @RequiredArgsConstructor
@@ -27,37 +32,55 @@ public class FastApiClient implements AiClient {
     // WebClient 주입
     private final WebClient aiWebClient;
 
+    // PDF 업로드 구현
+    @Override
+    public String uploadPdf(byte[] fileBytes, String fileName, String namespace) {
+        try {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("file", new ByteArrayResource(fileBytes) {
+                @Override
+                public String getFilename() { return fileName; }
+            }).contentType(MediaType.APPLICATION_PDF);
+            builder.part("namespace", namespace);
+
+            Map response = aiWebClient.post()
+                    .uri("/ai/upload")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            log.info("AI PDF 업로드 완료 - namespace: {}", namespace);
+            return namespace;
+
+        } catch (Exception e) {
+            log.error("AI PDF 업로드 실패 - namespace: {}", namespace, e);
+            throw new RuntimeException("AI 서버 PDF 업로드 실패", e);
+        }
+    }
+
+    // 스트리밍 응답
     @Override
     public Flux<String> streamResponse(String sessionId, String namespace, String question) {
 
-        // FastAPI로 보낼 JSON Body 구성
         Map<String, String> body = Map.of(
                 "session_id", sessionId,
                 "namespace", namespace,
                 "question", question
         );
 
-        // WebClient 요청 시작
         return aiWebClient.post()
-                .uri("/ai/ask") // FastAPI endpoint
-                .contentType(MediaType.APPLICATION_JSON) // JSON 요청
-                .accept(MediaType.TEXT_EVENT_STREAM) // SSE 요청
-                .bodyValue(body) // Body 설정
+                .uri("/ai/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .bodyValue(body)
                 .retrieve()
-
-                //  핵심: SSE를 안전하게 파싱
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
-
-                // data 부분만 추출
                 .mapNotNull(ServerSentEvent::data)
-
-                // 빈 데이터 제거
                 .filter(data -> !data.isBlank())
-
-                // 60초 타임아웃
                 .timeout(Duration.ofSeconds(60))
-
-                // 네트워크 오류 시 1회 재시도
-                .retry(1);
+                .retry(1)
+                .doOnError(e -> log.error("AI 스트리밍 오류 - sessionId: {}", sessionId, e));
     }
 }

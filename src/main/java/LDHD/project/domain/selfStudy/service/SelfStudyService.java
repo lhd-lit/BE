@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Slf4j
 @Service
@@ -233,14 +234,45 @@ public class SelfStudyService {
         String namespace = currentUserId + "_" + selfStudy.getId();
         selfStudy.updateNamespace(namespace);
 
-        log.info("SelfStudy DB 저장 완료 - selfStudyId: {}, namespace: {}, userId: {}",
-                selfStudy.getId(), namespace, currentUserId);
+        // S3 Presigned URL(GET)로 파일 다운로드 후 AI 서버 업로드
+        try {
+            // 기존 s3FileManager.generatePresignedUrl() 재사용
+            String getPresignedUrl = s3FileManager.generatePresignedUrl(request.getS3Key());
+
+            // S3에서 파일 다운로드
+            byte[] fileBytes = downloadFromUrl(getPresignedUrl);
+
+            // AI 서버에 업로드 (Pinecone 임베딩)
+            aiClient.uploadPdf(fileBytes, request.getOriginalFileName(), namespace);
+
+            log.info("AI 서버 PDF 업로드 완료 - selfStudyId: {}, namespace: {}",
+                    selfStudy.getId(), namespace);
+
+        } catch (Exception e) {
+            // AI 업로드 실패해도 SelfStudy 저장은 유지
+            log.error("AI 서버 업로드 실패 (SelfStudy 저장은 유지) - selfStudyId: {}",
+                    selfStudy.getId(), e);
+        }
 
         return new CreateSelfStudyResponse(
                 selfStudy.getId(),
                 selfStudy.getTitle(),
                 selfStudy.getDescription()
         );
+    }
+    // URL에서 파일 바이트 다운로드 (WebClient 재사용)
+    private byte[] downloadFromUrl(String url) {
+        try {
+            return WebClient.create()
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(byte[].class)
+                    .block();
+        } catch (Exception e) {
+            log.error("파일 다운로드 실패 - url: {}", url, e);
+            throw new RuntimeException("S3 파일 다운로드 실패", e);
+        }
     }
 
     // 공통 메서드 (중복 제거)
