@@ -13,43 +13,31 @@ import java.time.Duration;
 @Profile("local")
 public class MockAiClient implements AiClient {
 
-    /*
+    // Mock PDF 업로드
     @Override
-    public String generateResponseWithContext(
-            String question,
-            String context,
-            String chatHistory
-    ) {
-        log.info("MockAiClient (동기) 호출 - question: {}", question);
-
-        // 3초 대기 (AI 호출 시뮬레이션)
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        return buildMockResponse(question, context, chatHistory);
+    public String uploadPdf(byte[] fileBytes, String fileName, String namespace) {
+        log.info("MockAiClient PDF 업로드 - namespace: {}", namespace);
+        return namespace;
     }
-*/
+
     @Override
-    public Flux<String> streamResponse(
-            String sessionId,
-            String namespace,
-            String question
-    ) {
-        log.info("MockAiClient (스트리밍) 호출 - sessionId: {}, question: {}", sessionId, question);
+    public Flux<String> streamResponse(String sessionId, String namespace, String question) {
+        log.info("MockAiClient 스트리밍 - sessionId: {}, question: {}", sessionId, question);
 
-        String fullResponse = buildMockResponse(question, "mock context", "mock history");
-
-        // 문자열을 chunk 단위로 쪼개기
+        String fullResponse = buildMockResponse(question);
         String[] chunks = fullResponse.split(" ");
 
         return Flux.fromArray(chunks)
                 .delayElements(Duration.ofMillis(300))
-                .map(chunk -> chunk + " "); // 공백 복원
+                .map(chunk -> chunk + " ");
     }
 
+    private String buildMockResponse(String question) {
+        return "안녕하세요! 질문 [" + question + "] 에 대한 Mock 응답입니다. " +
+                "실제 환경에서는 FastAPI + Upstage LLM이 문서 기반으로 답변합니다.";
+    }
+}
+/*
     private String buildMockResponse(String question, String context, String chatHistory) {
 
         StringBuilder response = new StringBuilder();
@@ -83,4 +71,4 @@ public class MockAiClient implements AiClient {
 
         return response.toString();
     }
-}
+}*/

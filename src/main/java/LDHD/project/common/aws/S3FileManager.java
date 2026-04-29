@@ -53,7 +53,7 @@ public class S3FileManager {
             s3Client.putObject(request,RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
             log.info("S3 파일 업로드 완료 - key: {}", key);
-            return key; // ✅ URL이 아닌 key만 반환
+            return key;
 
         } catch (Exception e) {
             log.error("S3 파일 업로드 실패 - userId: {}", userId, e);
