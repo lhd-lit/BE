@@ -6,6 +6,7 @@ import LDHD.project.common.aws.web.dto.PresignedUploadResponse;
 import LDHD.project.common.exception.GeneralException;
 import LDHD.project.common.response.ErrorCode;
 import LDHD.project.common.utils.FileTextParser;
+import LDHD.project.domain.chat.client.AiClient;
 import LDHD.project.domain.chat.entity.GroupChatRoom;
 import LDHD.project.domain.chat.repository.GroupChatRoomRepository;
 import LDHD.project.domain.group.GroupRole;
@@ -33,6 +34,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Set;
@@ -52,6 +54,7 @@ public class StudyGroupService {
     private final FileTextParser fileTextParser;
     private final ApplicationEventPublisher eventPublisher;
     private final GroupChatRoomRepository  groupChatRoomRepository;
+    private final AiClient aiClient;
 
     // 스터디 그룹 생성
     @Transactional
@@ -466,9 +469,37 @@ public class StudyGroupService {
         );
 
         groupDocumentRepository.save(groupDocument);
+        // 그룹 문서도 동일하게 AI 서버 업로드
+        // namespace: "group_{groupId}_{groupDocumentId}"
+        String namespace = "group_" + groupId + "_" + groupDocument.getId();
+        groupDocumentRepository.save(groupDocument);  // 명시적 저장
+        try {
+            String getPresignedUrl = s3FileManager.generatePresignedUrl(request.getS3Key());
+            byte[] fileBytes = downloadFromUrl(getPresignedUrl);
+            aiClient.uploadPdf(fileBytes, request.getOriginalFileName(), namespace);
+            log.info("그룹 문서 AI 업로드 완료 - groupDocumentId: {}, namespace: {}",
+                    groupDocument.getId(), namespace);
+        } catch (Exception e) {
+            log.error("그룹 문서 AI 업로드 실패 - groupDocumentId: {}", groupDocument.getId(), e);
+        }
+
         log.info("그룹 문서 DB 저장 완료 - groupDocumentId: {}, groupId: {}, userId: {}",
                 groupDocument.getId(), groupId, userId);
 
         return GroupDocumentAddResponse.from(groupDocument);
+    }
+    // SelfStudyService와 동일한 다운로드 메서드
+    private byte[] downloadFromUrl(String url) {
+        try {
+            return WebClient.create()
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(byte[].class)
+                    .block();
+        } catch (Exception e) {
+            log.error("파일 다운로드 실패", e);
+            throw new RuntimeException("S3 파일 다운로드 실패", e);
+        }
     }
 }

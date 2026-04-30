@@ -31,6 +31,10 @@ public class MockAiClient implements AiClient {
                 .delayElements(Duration.ofMillis(300))
                 .map(chunk -> chunk + " ");
     }
+    @Override
+    public void clearSession(String sessionId) {
+        log.info("MockAiClient 세션 초기화 - sessionId: {}", sessionId);
+    }
 
     private String buildMockResponse(String question) {
         return "안녕하세요! 질문 [" + question + "] 에 대한 Mock 응답입니다. " +

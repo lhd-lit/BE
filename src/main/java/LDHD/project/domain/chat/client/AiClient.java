@@ -14,4 +14,6 @@ public interface AiClient {
 
     // PDF 업로드 추가
     String uploadPdf(byte[] fileBytes, String fileName, String namespace);
+    // 세션 초기화
+    void clearSession(String sessionId);
 }

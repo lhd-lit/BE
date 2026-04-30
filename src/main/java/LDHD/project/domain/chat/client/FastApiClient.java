@@ -73,14 +73,32 @@ public class FastApiClient implements AiClient {
         return aiWebClient.post()
                 .uri("/ai/ask")
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.TEXT_EVENT_STREAM)
+                .accept(MediaType.TEXT_PLAIN)
                 .bodyValue(body)
                 .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
-                .mapNotNull(ServerSentEvent::data)
+                .bodyToFlux(String.class)
                 .filter(data -> !data.isBlank())
                 .timeout(Duration.ofSeconds(60))
                 .retry(1)
                 .doOnError(e -> log.error("AI 스트리밍 오류 - sessionId: {}", sessionId, e));
+    }
+    // 세션 초기화 API 추가
+    public void clearSession(String sessionId) {
+        try {
+            aiWebClient.post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/ai/clear_session")
+                            .queryParam("session_id", sessionId)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            log.info("AI 세션 초기화 완료 - sessionId: {}", sessionId);
+
+        } catch (Exception e) {
+            log.error("AI 세션 초기화 실패 - sessionId: {}", sessionId, e);
+            // 세션 초기화 실패는 치명적이지 않으므로 예외를 던지지 않음
+        }
     }
 }

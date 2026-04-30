@@ -180,6 +180,24 @@ public class AiChatService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
+    // 7. 채팅방 삭제 (세션 초기화 추가)
+    @Transactional
+    public void deleteChatRoom(Long chatRoomId, Long userId) {
+        AiChatRoom chatRoom = getRoomWithOwnerValidation(chatRoomId, userId);
+
+        // AI 서버 세션 초기화 (대화 기록 삭제)
+        String sessionId = userId + "_" + chatRoomId;
+        try {
+            aiClient.clearSession(sessionId);
+            log.info("AI 세션 초기화 완료 - sessionId: {}", sessionId);
+        } catch (Exception e) {
+            log.warn("AI 세션 초기화 실패 (무시) - sessionId: {}", sessionId);
+        }
+
+        // DB에서 채팅방 삭제 (메시지는 cascade로 삭제되도록 설정 필요)
+        roomRepository.delete(chatRoom);
+        log.info("채팅방 삭제 완료 - chatRoomId: {}", chatRoomId);
+    }
 
     // 6. 유틸 메서드
 
