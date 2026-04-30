@@ -77,6 +77,10 @@ public class SelfStudyService {
         SelfStudy selfStudy = findSelfStudyOrThrow(selfStudyId);
         validateOwner(selfStudy, currentUserId);
 
+        // AI 서버 세션 초기화 (해당 SelfStudy와 관련된 모든 세션)
+        // namespace 패턴으로 세션을 찾아 초기화하려면 별도 로직 필요
+        // 현재는 생략 (필요시 구현)
+
         // S3 파일 삭제
         s3FileManager.delete(selfStudy.getS3Key());
 
@@ -233,6 +237,8 @@ public class SelfStudyService {
         // namespace 설정
         String namespace = currentUserId + "_" + selfStudy.getId();
         selfStudy.updateNamespace(namespace);
+        // 트랜잭션 내에서 dirty checking 보장
+        selfStudyRepository.save(selfStudy);
 
         // S3 Presigned URL(GET)로 파일 다운로드 후 AI 서버 업로드
         try {

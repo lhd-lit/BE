@@ -472,6 +472,7 @@ public class StudyGroupService {
         // 그룹 문서도 동일하게 AI 서버 업로드
         // namespace: "group_{groupId}_{groupDocumentId}"
         String namespace = "group_" + groupId + "_" + groupDocument.getId();
+        groupDocumentRepository.save(groupDocument);  // 명시적 저장
         try {
             String getPresignedUrl = s3FileManager.generatePresignedUrl(request.getS3Key());
             byte[] fileBytes = downloadFromUrl(getPresignedUrl);

@@ -132,6 +132,18 @@
             return GlobalResponse.onSuccess(SuccessCode.OK, response);
         }
 
+        // 채팅방 삭제 (세션 초기화 포함)
+        @Operation(summary = "AI 채팅방 삭제", description = "AI 채팅방을 삭제하고 관련 세션을 초기화합니다.")
+        @DeleteMapping("/rooms/{chatRoomId}")
+        public ResponseEntity<GlobalResponse> deleteChatRoom(@PathVariable Long chatRoomId,
+                                                             @Parameter(name = "X-USER-ID", required = true, in = ParameterIn.HEADER)
+                                                             @RequestHeader("X-USER-ID") Long currentUserId
+        ) {
+            aiChatService.deleteChatRoom(chatRoomId, currentUserId);
+
+            return GlobalResponse.onSuccess(SuccessCode.OK, "채팅방이 삭제되었습니다.");
+        }
+
         // Principal에서 userId 추출
         private String extractPrincipalName(Principal principal) {
             if (principal == null || principal.getName() == null) {
