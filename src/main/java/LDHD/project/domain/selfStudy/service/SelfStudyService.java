@@ -244,6 +244,7 @@ public class SelfStudyService {
         try {
             // 기존 s3FileManager.generatePresignedUrl() 재사용
             String getPresignedUrl = s3FileManager.generatePresignedUrl(request.getS3Key());
+            log.info("생성된 Presigned URL: {}", getPresignedUrl); // 임시 로그 확인용
 
             // S3에서 파일 다운로드
             byte[] fileBytes = downloadFromUrl(getPresignedUrl);
